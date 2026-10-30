@@ -1712,9 +1712,22 @@
         else if (e.key === '?') openShortcuts();
       });
     }
+    // Netlify Shadow DOM Drawerን ሙሉ በሙሉ ቆርጦ ያጠፋል
     setInterval(() => {
-      document.querySelectorAll('netlify-drawer, div[data-netlify-deploy-id]').forEach(el => el.remove());
-    }, 500);
+      // 1. መደበኛ ኤለመንቶችን ያጠፋል
+      document.querySelectorAll('netlify-drawer, #netlify-drawer, div[data-netlify-deploy-id]').forEach(el => el.remove());
+      
+      // 2. በ Shadow DOM ውስጥ የተደበቀውን ባጅ አድኖ ያጠፋል
+      const allElements = document.querySelectorAll('*');
+      allElements.forEach(el => {
+        if (el.shadowRoot) {
+          const badge = el.shadowRoot.querySelector('[class*="badge"], [class*="drawer"], [aria-label*="Netlify"]');
+          if (badge) {
+            el.remove();
+          }
+        }
+      });
+    }, 100);
   </script>
 </body>
 </html>
