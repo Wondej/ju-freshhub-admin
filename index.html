@@ -74,16 +74,6 @@
       .th { @apply py-3.5 px-4 text-[11px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400; }
       .kbd { @apply inline-flex items-center justify-center min-w-[1.5rem] px-1.5 py-0.5 rounded-md text-[11px] font-mono font-semibold bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300; }
       .copyable { @apply cursor-pointer hover:text-brand-600 dark:hover:text-brand-400 transition; }
-    /* Netlify Badge & Feedback Drawer ሙሉ ለሙሉ ይደብቃል */
-div[data-netlify-deploy-id],
-.netlify-badge,
-iframe[src*="netlify"],
-div[class*="netlify"] {
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
     }
   </style>
 
@@ -98,6 +88,25 @@ div[class*="netlify"] {
         radial-gradient(700px 400px at 100% 0%, rgba(245,184,61,.12), transparent 60%),
         #F6F7FB;
     }
+    netlify-drawer,
+    #netlify-drawer,
+    div[data-netlify-deploy-id],
+    .netlify-badge,
+    iframe[src*="netlify"],
+    div[class*="netlify"],
+    div:has(> a[href*="netlify.com"]),
+    div:has(> svg[class*="netlify"]) {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      width: 0 !important;
+      height: 0 !important;
+      position: absolute !important;
+      left: -9999px !important;
+      top: -9999px !important;
+      z-index: -9999 !important;
+    }    
     .dark .bg-ambient {
       background:
         radial-gradient(900px 400px at 10% -10%, rgba(245,158,11,.20), transparent 60%),
@@ -1703,6 +1712,9 @@ div[class*="netlify"] {
         else if (e.key === '?') openShortcuts();
       });
     }
+    setInterval(() => {
+      document.querySelectorAll('netlify-drawer, div[data-netlify-deploy-id]').forEach(el => el.remove());
+    }, 500);
   </script>
 </body>
 </html>
