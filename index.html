@@ -45,12 +45,12 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen">
 
-  <!-- Notification Audio -->
+  <!-- ደወል ድምፅ (Notification Chime) -->
   <audio id="notif-sound" preload="auto">
     <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
   </audio>
 
-  <!-- ======================== LOGIN OVERLAY ======================== -->
+  <!-- ======================== LOGIN / AUTH OVERLAY ======================== -->
   <div id="auth-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 border border-slate-100">
       <div class="flex items-center space-x-3 mb-6">
@@ -80,6 +80,12 @@
                 class="w-full py-3 bg-brand-navy hover:bg-slate-900 text-white font-bold rounded-lg text-sm shadow-md transition flex items-center justify-center space-x-2">
           <span>Sign In to Dashboard</span>
         </button>
+
+        <div class="text-center pt-1">
+          <button type="button" onclick="handleAdminRegister()" class="text-xs text-brand-navy hover:underline font-semibold">
+            First time? Click to Create Admin Account with this Password
+          </button>
+        </div>
 
         <div class="relative flex py-2 items-center">
           <div class="flex-grow border-t border-slate-200"></div>
@@ -123,6 +129,10 @@
         </nav>
 
         <div class="flex items-center space-x-2">
+          <!-- Admin Email Display -->
+          <span id="admin-user-display" class="hidden sm:inline text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg"></span>
+
+          <!-- Notification Status Badge -->
           <button onclick="requestNotificationPermission()" id="push-perm-btn" class="px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-bold hover:bg-slate-100 flex items-center space-x-1 text-slate-700">
             <i data-lucide="bell-ring" class="w-4 h-4 text-brand-navy"></i>
             <span class="hidden sm:inline">Enable Phone Alerts</span>
@@ -189,7 +199,7 @@
         </div>
       </section>
 
-      <!-- TAB 1: PAYMENTS -->
+      <!-- ======================== TAB 1: PAYMENTS & RECEIPTS ======================== -->
       <section id="view-payments" class="space-y-4">
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
           <div class="relative flex-1">
@@ -234,7 +244,7 @@
         </div>
       </section>
 
-      <!-- TAB 2: STUDENTS -->
+      <!-- ======================== TAB 2: STUDENT DIRECTORY ======================== -->
       <section id="view-students" class="hidden space-y-4">
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
           <div class="relative flex-1">
@@ -277,7 +287,7 @@
         </div>
       </section>
 
-      <!-- TAB 3: ANNOUNCEMENTS -->
+      <!-- ======================== TAB 3: ANNOUNCEMENTS ======================== -->
       <section id="view-announcements" class="hidden space-y-6">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
@@ -330,7 +340,7 @@
         </div>
       </section>
 
-      <!-- TAB 4: TELEGRAM & ALERTS -->
+      <!-- ======================== TAB 4: ALERTS & TELEGRAM BOT ======================== -->
       <section id="view-notifications" class="hidden space-y-6">
         <div class="max-w-2xl bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
           <div class="flex items-center space-x-3">
@@ -338,27 +348,41 @@
               <i data-lucide="send" class="w-6 h-6"></i>
             </div>
             <div>
-              <h3 class="text-base font-bold text-slate-900">Telegram Instant Alerts</h3>
-              <p class="text-xs text-slate-500">ተማሪ ሲመዘገብ ወይም ክፍያ ሲልክ ስልክህ ላይ በቴሌግራም መልዕክት ይደርስሃል</p>
+              <h3 class="text-base font-bold text-slate-900">Telegram Instant Phone Notifications</h3>
+              <p class="text-xs text-slate-500">ተማሪ ሲመዘገብ ወይም ክፍያ ሲልክ ስልክህ ላይ በቴሌግራም ሜሴጅ ድምጽ አሰምቶ እንዲደርስህ አድርግ</p>
             </div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2 text-slate-600 leading-relaxed">
+            <p class="font-bold text-slate-800">እንዴት ማዋቀር ትችላለህ (1 ደቂቃ)?</p>
+            <ol class="list-decimal pl-4 space-y-1">
+              <li>ቴሌግራም ላይ <b>@BotFather</b> ጋር ሂድና <code class="bg-white px-1.5 py-0.5 rounded border">/newbot</code> ብለህ Bot ፍጠር፤ የተሰጠህን <b>Bot Token</b> ከታች አስገባ።</li>
+              <li>ከዚያ <b>@userinfobot</b> ጋር ሄደህ <code class="bg-white px-1.5 py-0.5 rounded border">/start</code> ስትለው የሚሰጥህን ያንተን <b>Id (Chat ID)</b> አስገባ።</li>
+              <li>የፈጠርከውን ቦት ቴሌግራም ላይ ፈልገህ <code class="bg-white px-1.5 py-0.5 rounded border">/start</code> በለው (መልዕክት እንዲልክልህ ይፈቀድለታል)።</li>
+            </ol>
           </div>
 
           <div class="space-y-3">
             <div>
-              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Telegram Bot Token (Active)</label>
-              <input type="text" id="tg-bot-token" readonly value="9082714639:AAGscH5FdluEPIntyAXvp2GB_bO5L7sTTg0"
-                     class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-mono outline-none" />
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Telegram Bot Token</label>
+              <input type="text" id="tg-bot-token" placeholder="9082714639:AAGscH5FdluEPIntyAXvp2GB_bO5L7sTTg0"
+                     class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:ring-2 focus:ring-brand-navy outline-none" />
             </div>
 
             <div>
-              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Your Telegram Chat ID (Active)</label>
-              <input type="text" id="tg-chat-id" readonly value="5927660855"
-                     class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-mono outline-none" />
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Your Telegram Chat ID</label>
+              <input type="text" id="tg-chat-id" placeholder="e.g. 123456789"
+                     class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:ring-2 focus:ring-brand-navy outline-none" />
             </div>
 
-            <button onclick="testTelegramNotification()" class="w-full py-2.5 bg-brand-navy hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition">
-              Test Alert Now (Send test message to phone)
-            </button>
+            <div class="flex gap-2 pt-2">
+              <button onclick="saveTelegramSettings()" class="flex-1 py-2.5 bg-brand-navy hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition">
+                Save Telegram Settings
+              </button>
+              <button onclick="testTelegramNotification()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
+                Test Alert Now
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -366,7 +390,7 @@
     </main>
   </div>
 
-  <!-- MODAL: RECEIPT PREVIEW -->
+  <!-- ======================== SCREENSHOT MODAL ======================== -->
   <div id="screenshot-modal" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
       <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
@@ -396,9 +420,8 @@
     </div>
   </div>
 
-  <!-- ======================== CORE APPLICATION SCRIPT ======================== -->
+  <!-- ======================== SCRIPT ======================== -->
   <script>
-    // 1. First initialize Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDhb3KHZYGtDzAxd7v7rakyUqwNL4B2YYQ",
       authDomain: "ju-freshhub.firebaseapp.com",
@@ -408,40 +431,40 @@
       appId: "1:660385131556:web:22a98f637d890564b13cb1"
     };
 
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
 
+    firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
-
-    const TELEGRAM_BOT_TOKEN = "9082714639:AAGscH5FdluEPIntyAXvp2GB_bO5L7sTTg0";
-    const TELEGRAM_CHAT_ID = "5927660855";
 
     let rawPayments = [];
     let rawUsers = [];
     let rawAnnouncements = [];
     let isInitialLoad = true;
 
-    // 2. Setup Auth Listener safely
-    auth.onAuthStateChanged((user) => {
-      if (user && user.email && user.email.toLowerCase() === 'ninjaabi213@gmail.com') {
-        document.getElementById('auth-modal').classList.add('hidden');
-        document.getElementById('app-container').classList.remove('hidden');
-        startFirestoreListeners();
-      } else if (user) {
-        document.getElementById('auth-modal').classList.remove('hidden');
-        document.getElementById('app-container').classList.add('hidden');
-        showAuthError(`Signed in as ${user.email}, but admin rules require ninjaabi213@gmail.com.`);
-      } else {
-        document.getElementById('auth-modal').classList.remove('hidden');
-        document.getElementById('app-container').classList.add('hidden');
-      }
-    });
-
     document.addEventListener("DOMContentLoaded", () => {
       lucide.createIcons();
+      loadTelegramSettings();
+      setupAuthListener();
     });
+
+    function setupAuthListener() {
+      auth.onAuthStateChanged((user) => {
+        if (user && user.email && user.email.toLowerCase() === 'ninjaabi213@gmail.com') {
+          document.getElementById('auth-modal').classList.add('hidden');
+          document.getElementById('app-container').classList.remove('hidden');
+          const displayEl = document.getElementById('admin-user-display');
+          if (displayEl) displayEl.innerText = user.email;
+          startFirestoreListeners();
+        } else if (user) {
+          document.getElementById('auth-modal').classList.remove('hidden');
+          document.getElementById('app-container').classList.add('hidden');
+          showAuthError(`Signed in as ${user.email}, but your rules only grant admin access to ninjaabi213@gmail.com.`);
+        } else {
+          document.getElementById('auth-modal').classList.remove('hidden');
+          document.getElementById('app-container').classList.add('hidden');
+        }
+      });
+    }
 
     function showAuthError(msg) {
       const errorDiv = document.getElementById('auth-error');
@@ -470,6 +493,23 @@
       }
     }
 
+    async function handleAdminRegister() {
+      const email = document.getElementById('admin-email').value.trim();
+      const password = document.getElementById('admin-password').value;
+
+      if (!password || password.length < 6) {
+        showAuthError("Please enter a password of at least 6 characters in the Password field first.");
+        return;
+      }
+
+      try {
+        await auth.createUserWithEmailAndPassword(email, password);
+        alert("Admin account created successfully!");
+      } catch (err) {
+        showAuthError(err.message);
+      }
+    }
+
     function handleSignOut() {
       if (confirm("Sign out of the admin panel?")) {
         auth.signOut();
@@ -477,12 +517,16 @@
     }
 
     // ─────────────────────────────────────────────────────────────
-    // 🔔 NOTIFICATIONS SYSTEM
+    // 🔔 NOTIFICATIONS SYSTEM (Audio + Browser Push + Telegram)
     // ─────────────────────────────────────────────────────────────
-    function triggerPhoneAlert(title, message) {
+    function triggerPhoneAlert(title, message, isPayment = false) {
+      // 1. የድምፅ ደወል (Audio Alert)
       const sound = document.getElementById('notif-sound');
-      if (sound) sound.play().catch(() => {});
+      if (sound) {
+        sound.play().catch(() => {});
+      }
 
+      // 2. Browser Push Notification
       if ("Notification" in window && Notification.permission === "granted") {
         new Notification(title, {
           body: message,
@@ -490,26 +534,49 @@
         });
       }
 
+      // 3. Telegram Instant Alert
       sendTelegramMessage(`🔔 *${title}*\n\n${message}`);
     }
 
     function requestNotificationPermission() {
-      if (!("Notification" in window)) return;
+      if (!("Notification" in window)) {
+        alert("This browser does not support desktop notifications.");
+        return;
+      }
       Notification.requestPermission().then(permission => {
         if (permission === "granted") {
-          alert("Phone notifications are active!");
+          alert("Phone notifications are active! You will get alerts when students register or pay.");
           new Notification("JU FreshHub Alerts Active", { body: "You will receive live alerts for registrations and payments." });
         }
       });
     }
 
+    function loadTelegramSettings() {
+      const token = localStorage.getItem('ju_tg_bot_token') || '';
+      const chatId = localStorage.getItem('ju_tg_chat_id') || '';
+      document.getElementById('tg-bot-token').value = token;
+      document.getElementById('tg-chat-id').value = chatId;
+    }
+
+    function saveTelegramSettings() {
+      const token = document.getElementById('tg-bot-token').value.trim();
+      const chatId = document.getElementById('tg-chat-id').value.trim();
+      localStorage.setItem('ju_tg_bot_token', token);
+      localStorage.setItem('ju_tg_chat_id', chatId);
+      alert("Telegram notification settings saved!");
+    }
+
     async function sendTelegramMessage(text) {
+      const token = "9082714639:AAGscH5FdluEPIntyAXvp2GB_bO5L7sTTg0";
+      const chatId = "5927660855";
+      if (!token || !chatId) return;
+
       try {
-        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            chat_id: TELEGRAM_CHAT_ID,
+            chat_id: chatId,
             text: text,
             parse_mode: 'Markdown'
           })
@@ -520,18 +587,34 @@
     }
 
     function testTelegramNotification() {
+      const token = document.getElementById('tg-bot-token').value.trim();
+      const chatId = document.getElementById('tg-chat-id').value.trim();
+      if (!token || !chatId) {
+        alert("Please enter both Bot Token and Chat ID first.");
+        return;
+      }
       sendTelegramMessage("🎓 *JU FreshHub Test Alert*\n\nይህ የሙከራ መልዕክት ነው! ተማሪ ሲመዘገብ ወይም ክፍያ ሲልክ በዚህ መልኩ ስልክህ ላይ ማስታወቂያ ይደርስሃል።")
         .then(() => alert("Test alert sent to your Telegram! Check your phone."))
         .catch(err => alert("Failed to send: " + err));
     }
 
+    // Helper to safely extract milliseconds from Firestore timestamps or date strings
+    function getTimestampMs(val) {
+      if (!val) return 0;
+      if (typeof val === 'number') return val;
+      if (val.toMillis) return val.toMillis();
+      if (val.seconds) return val.seconds * 1000;
+      if (val instanceof Date) return val.getTime();
+      const d = new Date(val).getTime();
+      return isNaN(d) ? 0 : d;
+    }
+
     // ─────────────────────────────────────────────────────────────
-    // 📡 FIRESTORE REAL-TIME MONITORING
+    // 📡 REAL-TIME FIRESTORE MONITORING
     // ─────────────────────────────────────────────────────────────
     function startFirestoreListeners() {
-      // 1. Payments Listener
+      // 1. Payment Submissions Listener
       db.collection('payment_submissions')
-        .orderBy('createdAt', 'desc')
         .onSnapshot((snapshot) => {
           if (!isInitialLoad) {
             snapshot.docChanges().forEach((change) => {
@@ -546,11 +629,18 @@
           }
 
           rawPayments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          rawPayments.sort((a, b) => getTimestampMs(b.createdAt) - getTimestampMs(a.createdAt));
           updateMetrics();
           renderPayments();
-        }, (err) => console.error("Payment listener error:", err));
+        }, (err) => {
+          console.error("Payment listener error:", err);
+          const tbody = document.getElementById('payments-tbody');
+          if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-red-500 font-semibold">Error reading payments: ${escapeHtml(err.message)}</td></tr>`;
+          }
+        });
 
-      // 2. Users Listener
+      // 2. Users (Student Registrations) Listener
       db.collection('users')
         .onSnapshot((snapshot) => {
           if (!isInitialLoad) {
@@ -566,18 +656,27 @@
           }
 
           rawUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          rawUsers.sort((a, b) => getTimestampMs(b.createdAt) - getTimestampMs(a.createdAt));
           updateMetrics();
           renderStudents();
           isInitialLoad = false;
-        }, (err) => console.error("Users listener error:", err));
+        }, (err) => {
+          console.error("Users listener error:", err);
+          const tbody = document.getElementById('students-tbody');
+          if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-red-500 font-semibold">Error reading students: ${escapeHtml(err.message)}</td></tr>`;
+          }
+        });
 
       // 3. Announcements Listener
       db.collection('announcements')
-        .orderBy('createdAt', 'desc')
         .onSnapshot((snapshot) => {
           rawAnnouncements = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          rawAnnouncements.sort((a, b) => getTimestampMs(b.createdAt) - getTimestampMs(a.createdAt));
           renderAnnouncements();
-        }, (err) => console.error("Announcements listener error:", err));
+        }, (err) => {
+          console.error("Announcements listener error:", err);
+        });
     }
 
     function updateMetrics() {
@@ -756,9 +855,6 @@
       lucide.createIcons();
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // ⚙️ ACTIONS: APPROVE / REJECT / PRO / ANNOUNCEMENTS
-    // ─────────────────────────────────────────────────────────────
     async function approvePayment(submissionId, userId) {
       if (!confirm("Approve this payment receipt and grant permanent Pro Access to the student?")) return;
 
@@ -773,17 +869,18 @@
 
         if (userId) {
           const userRef = db.collection('users').doc(userId);
-          batch.update(userRef, {
+          batch.set(userRef, {
             isProUnlocked: true,
             paymentStatus: 'APPROVED',
             proActivatedAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
+          }, { merge: true });
         }
 
         await batch.commit();
         alert("Payment approved and Pro unlocked for the student!");
       } catch (err) {
+        console.error("Approval error:", err);
         alert("Error approving payment: " + err.message);
       }
     }
@@ -815,12 +912,12 @@
           reviewedBy: 'ninjaabi213@gmail.com'
         });
         if (userId) {
-          batch.update(db.collection('users').doc(userId), {
+          batch.set(db.collection('users').doc(userId), {
             isProUnlocked: false,
             paymentStatus: 'REJECTED',
             proRevokedAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
+          }, { merge: true });
         }
         await batch.commit();
       } catch (err) {
@@ -844,7 +941,7 @@
           updateData.proRevokedAt = firebase.firestore.FieldValue.serverTimestamp();
         }
 
-        await db.collection('users').doc(userId).update(updateData);
+        await db.collection('users').doc(userId).set(updateData, { merge: true });
       } catch (err) {
         alert("Error updating user: " + err.message);
       }
