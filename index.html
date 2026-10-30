@@ -3,8 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#D97706" />
   <title>JU FreshHub — Admin & Notification Portal</title>
   <link rel="icon" href="https://img.icons8.com/color/48/graduation-cap.png" type="image/png" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+Ethiopic:wght@400;600;700&display=swap" rel="stylesheet">
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -12,19 +18,36 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <script>
+    // Apply saved theme before paint (prevents flash)
+    (function () {
+      try {
+        const saved = localStorage.getItem('ju_theme');
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (saved === 'dark' || (!saved && prefersDark)) document.documentElement.classList.add('dark');
+      } catch (e) {}
+    })();
+
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans Ethiopic', 'system-ui', 'sans-serif'],
+            display: ['Sora', 'Noto Sans Ethiopic', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+          },
           colors: {
             brand: {
-              navy: '#1E3A8A',
-              navyDark: '#0F172A',
-              gold: '#F2B134',
-              teal: '#0F766E',
-              green: '#16A34A',
+              50: '#FFFBEB', 100: '#FEF3C7', 200: '#FDE68A', 400: '#FBBF24',
+              500: '#F59E0B', 600: '#D97706', 700: '#B45309', 800: '#92400E', 900: '#451A03',
+              gold: '#F5B83D',
             }
-          }
+          },
+          keyframes: {
+            toastIn: { '0%': { opacity: 0, transform: 'translateY(-8px) scale(.97)' }, '100%': { opacity: 1, transform: 'none' } },
+            floaty: { '0%,100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-6px)' } },
+          },
+          animation: { toastIn: 'toastIn .25s ease-out', floaty: 'floaty 6s ease-in-out infinite' }
         }
       }
     }
@@ -35,62 +58,145 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
+  <style type="text/tailwindcss">
+    @layer components {
+      .card { @apply bg-white/90 dark:bg-slate-900/70 backdrop-blur border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm shadow-slate-900/5; }
+      .input { @apply w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition; }
+      .label { @apply block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5; }
+      .btn { @apply inline-flex items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition active:scale-[.97] disabled:opacity-50 disabled:cursor-not-allowed; }
+      .btn-primary { @apply btn text-white bg-gradient-to-br from-brand-600 to-brand-800 hover:from-brand-500 hover:to-brand-700 shadow-md shadow-brand-600/25; }
+      .btn-ghost { @apply btn bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200; }
+      .btn-ok { @apply btn text-white bg-emerald-600 hover:bg-emerald-500 shadow-sm shadow-emerald-600/25; }
+      .btn-danger { @apply btn bg-rose-100 hover:bg-rose-200 text-rose-700 dark:bg-rose-500/15 dark:hover:bg-rose-500/25 dark:text-rose-300; }
+      .btn-warn { @apply btn bg-amber-100 hover:bg-amber-200 text-amber-800 dark:bg-amber-500/15 dark:hover:bg-amber-500/25 dark:text-amber-300; }
+      .chip { @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 hover:border-brand-400 transition cursor-pointer select-none; }
+      .chip-active { @apply bg-brand-600 border-brand-600 text-white dark:bg-brand-500 dark:border-brand-500 dark:text-white; }
+      .th { @apply py-3.5 px-4 text-[11px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400; }
+      .kbd { @apply inline-flex items-center justify-center min-w-[1.5rem] px-1.5 py-0.5 rounded-md text-[11px] font-mono font-semibold bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300; }
+      .copyable { @apply cursor-pointer hover:text-brand-600 dark:hover:text-brand-400 transition; }
+    }
+  </style>
+
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-    body { font-family: 'Plus Jakarta Sans', sans-serif; }
-    .badge-pending { background-color: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
-    .badge-approved { background-color: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; }
-    .badge-rejected { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
+    body { font-family: 'Inter', 'Noto Sans Ethiopic', sans-serif; }
+    .font-display { font-family: 'Sora', 'Noto Sans Ethiopic', sans-serif; }
+
+    /* Ambient background */
+    .bg-ambient {
+      background:
+        radial-gradient(900px 400px at 10% -10%, rgba(245,158,11,.16), transparent 60%),
+        radial-gradient(700px 400px at 100% 0%, rgba(245,184,61,.12), transparent 60%),
+        #F6F7FB;
+    }
+    .dark .bg-ambient {
+      background:
+        radial-gradient(900px 400px at 10% -10%, rgba(245,158,11,.20), transparent 60%),
+        radial-gradient(700px 400px at 100% 0%, rgba(245,184,61,.08), transparent 60%),
+        #0B1020;
+    }
+
+    /* Status badges */
+    .badge { display:inline-flex; align-items:center; gap:.35rem; padding:.25rem .65rem; border-radius:9999px; font-size:.7rem; font-weight:700; border:1px solid transparent; }
+    .badge-pending  { background:#FEF3C7; color:#92400E; border-color:#FCD34D; }
+    .badge-approved { background:#D1FAE5; color:#065F46; border-color:#6EE7B7; }
+    .badge-rejected { background:#FFE4E6; color:#9F1239; border-color:#FDA4AF; }
+    .badge-unpaid   { background:#F1F5F9; color:#64748B; border-color:#E2E8F0; }
+    .dark .badge-pending  { background:rgba(245,158,11,.15); color:#FCD34D; border-color:rgba(245,158,11,.35); }
+    .dark .badge-approved { background:rgba(16,185,129,.15); color:#6EE7B7; border-color:rgba(16,185,129,.35); }
+    .dark .badge-rejected { background:rgba(244,63,94,.15);  color:#FDA4AF; border-color:rgba(244,63,94,.35); }
+    .dark .badge-unpaid   { background:rgba(148,163,184,.12); color:#94A3B8; border-color:rgba(148,163,184,.25); }
+
+    /* Skeleton shimmer */
+    .skeleton { position:relative; overflow:hidden; background:#E2E8F0; border-radius:.5rem; }
+    .dark .skeleton { background:#1E293B; }
+    .skeleton::after { content:''; position:absolute; inset:0; transform:translateX(-100%);
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent); animation:shimmer 1.4s infinite; }
+    .dark .skeleton::after { background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent); }
+    @keyframes shimmer { 100% { transform:translateX(100%); } }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width:10px; height:10px; }
+    ::-webkit-scrollbar-thumb { background:#CBD5E1; border-radius:10px; border:2px solid transparent; background-clip:content-box; }
+    .dark ::-webkit-scrollbar-thumb { background:#334155; background-clip:content-box; }
+
+    /* Table row accent for pending */
+    tr.row-pending { box-shadow: inset 3px 0 0 #F59E0B; }
+
+    .tab-btn.active { background:#fff; color:#B45309; box-shadow:0 1px 3px rgba(15,23,42,.12); }
+    .dark .tab-btn.active { background:#1E293B; color:#FDE68A; }
+
+    /* Hide sensitive text (email) behind a blur; value stays in the field so sign-in still works */
+    .secret-blur { color: transparent !important; text-shadow: 0 0 9px rgba(100,116,139,.95); user-select: none; -webkit-user-select: none; cursor: default; caret-color: transparent; }
+    .secret-blur::selection { background: transparent; }
+    .dark .secret-blur { text-shadow: 0 0 9px rgba(203,213,225,.9); }
+    .pulse-dot { animation: pulse 1.6s cubic-bezier(.4,0,.6,1) infinite; }
+    @keyframes pulse { 50% { opacity:.35; } }
+
+    @media (max-width: 767px) { main { padding-bottom: 6rem; } }
+    @media print { header, nav, .no-print { display:none !important; } }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen">
+<body class="bg-ambient text-slate-800 dark:text-slate-100 min-h-screen antialiased">
 
   <!-- ደወል ድምፅ (Notification Chime) -->
   <audio id="notif-sound" preload="auto">
     <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
   </audio>
 
+  <!-- Toast container -->
+  <div id="toast-root" class="fixed top-4 right-4 z-[100] flex flex-col gap-2 w-[min(92vw,22rem)] pointer-events-none"></div>
+
   <!-- ======================== LOGIN / AUTH OVERLAY ======================== -->
-  <div id="auth-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 border border-slate-100">
-      <div class="flex items-center space-x-3 mb-6">
-        <div class="w-12 h-12 rounded-xl bg-brand-navy flex items-center justify-center text-white font-black text-xl shadow-lg shadow-brand-navy/30">
-          JU
+  <div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gradient-to-br from-brand-900 via-slate-900 to-slate-950 overflow-hidden">
+    <img id="login-bg" class="hidden absolute inset-0 w-full h-full object-cover opacity-40" alt="" />
+    <div class="absolute -top-24 -left-24 w-80 h-80 rounded-full bg-brand-500/30 blur-3xl animate-floaty"></div>
+    <div class="absolute -bottom-24 -right-16 w-80 h-80 rounded-full bg-brand-gold/20 blur-3xl animate-floaty" style="animation-delay:-3s"></div>
+
+    <div class="relative bg-white/95 dark:bg-slate-900/90 backdrop-blur-xl rounded-3xl shadow-2xl max-w-md w-full p-8 border border-white/20 dark:border-slate-700">
+      <div id="login-hero" class="hidden -mx-8 -mt-8 mb-6 h-36 rounded-t-3xl overflow-hidden relative">
+        <img id="login-hero-img" class="w-full h-full object-cover" alt="Jimma University campus" />
+        <div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent"></div>
+        <p class="absolute bottom-3 left-5 text-white text-xs font-bold tracking-wide drop-shadow">Welcome To JU Freshhub</p>
+      </div>
+      <div class="flex items-center gap-3 mb-6">
+        <div class="ju-logo-box w-14 h-14 shrink-0 rounded-2xl overflow-hidden bg-gradient-to-br from-brand-600 to-brand-900 flex items-center justify-center text-white font-display font-extrabold text-xl shadow-lg shadow-brand-700/40">
+          <img class="ju-logo-img hidden w-full h-full object-contain p-1" alt="JU logo" />
+          <span class="ju-logo-text">JU</span>
         </div>
         <div>
-          <h2 class="text-xl font-bold text-slate-900">JU FreshHub Admin</h2>
-          <p class="text-xs text-slate-500">Authorized: <span class="font-bold text-brand-navy">By Wondmagegn Yohannes</span></p>
+          <h2 class="text-xl font-display font-bold text-slate-900 dark:text-white">JU FreshHub Admin</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Authorized By: <span class="font-bold text-brand-700 dark:text-brand-200">Wondmagegn Yohannes</span></p>
         </div>
       </div>
 
-      <div id="auth-error" class="hidden mb-4 p-3 rounded-lg bg-red-50 text-red-700 text-xs font-semibold leading-relaxed border border-red-200"></div>
+      <div id="auth-error" class="hidden mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 text-xs font-semibold leading-relaxed border border-rose-200 dark:border-rose-500/30"></div>
 
       <form id="login-form" onsubmit="handleAdminLogin(event)" class="space-y-4">
         <div>
-          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Admin Email</label>
-          <input type="email" id="admin-email" required value="ninjaabi213@gmail.com"
-                 class="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-brand-navy outline-none transition" />
+          <label class="label flex items-center justify-between"><span>Admin Email</span><span class="normal-case tracking-normal font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1"><i data-lucide="shield-check" class="w-3 h-3"></i></span></label>
+          <div class="relative">
+            <i data-lucide="mail" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input type="email" id="admin-email" required value="ninjaabi213@gmail.com" readonly autocomplete="off" tabindex="-1" class="input pl-10 secret-blur" title="Admin email is saved and hidden for security" />
+          </div>
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Password</label>
-          <input type="password" id="admin-password" required placeholder="Enter password"
-                 class="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-brand-navy outline-none transition" />
+          <label class="label">Password</label>
+          <div class="relative">
+            <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input type="password" id="admin-password" required placeholder="Enter password" class="input pl-10 pr-11" />
+            <button type="button" onclick="togglePasswordVisibility()" class="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200" title="Show / hide password">
+              <i data-lucide="eye" id="pw-eye" class="w-4 h-4"></i>
+            </button>
+          </div>
         </div>
-        <button type="submit" id="login-btn"
-                class="w-full py-3 bg-brand-navy hover:bg-slate-900 text-white font-bold rounded-lg text-sm shadow-md transition flex items-center justify-center space-x-2">
+        <button type="submit" id="login-btn" class="btn-primary w-full py-3 text-sm">
           <span>Sign In to Dashboard</span>
         </button>
 
-        <div class="text-center pt-1">
-          <button type="button" onclick="handleAdminRegister()" class="text-xs text-brand-navy hover:underline font-semibold">
-            First time? Click to Create Admin Account with this Password
-          </button>
-        </div>
-
         <div class="relative flex py-2 items-center">
-          <div class="flex-grow border-t border-slate-200"></div>
+          <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
           <span class="flex-shrink mx-2 text-[10px] text-slate-400 uppercase font-bold tracking-wider">Alpha Tech Ⓒ All Right reserved 2026</span>
-          <div class="flex-grow border-t border-slate-200"></div>
+          <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
         </div>
       </form>
     </div>
@@ -99,145 +205,193 @@
   <!-- ======================== MAIN DASHBOARD ======================== -->
   <div id="app-container" class="hidden min-h-screen flex flex-col">
     <!-- Navbar -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 rounded-xl bg-brand-navy text-brand-gold flex items-center justify-center font-black text-lg shadow-md">
-            JU
+    <header class="bg-white/80 dark:bg-slate-950/70 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 sticky top-0 z-30">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="ju-logo-box w-10 h-10 shrink-0 rounded-xl overflow-hidden bg-gradient-to-br from-brand-600 to-brand-900 text-white flex items-center justify-center font-display font-extrabold text-base shadow-md shadow-brand-700/30">
+            <img class="ju-logo-img hidden w-full h-full object-contain p-0.5" alt="JU logo" />
+            <span class="ju-logo-text">JU</span>
           </div>
-          <div>
-            <h1 class="text-base font-extrabold text-slate-900 leading-tight">JU FreshHub Portal</h1>
-            <p class="text-xs font-medium text-slate-500">Real-time Student & Payment Monitor</p>
+          <div class="min-w-0">
+            <h1 class="text-sm sm:text-base font-display font-bold text-slate-900 dark:text-white leading-tight truncate">JU FreshHub Portal</h1>
+            <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 pulse-dot"></span>
+              <span id="sync-status">Connecting…</span>
+            </p>
           </div>
         </div>
 
-        <!-- Navigation Tabs -->
-        <nav class="hidden md:flex space-x-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
-          <button onclick="switchTab('payments')" id="tab-btn-payments" class="tab-btn active px-4 py-2 rounded-lg bg-white shadow-sm text-brand-navy font-bold">
-            Payments & Receipts
+        <!-- Navigation Tabs (desktop) -->
+        <nav class="hidden md:flex gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl text-xs font-semibold">
+          <button onclick="switchTab('payments')" id="tab-btn-payments" class="tab-btn active px-4 py-2 rounded-lg text-slate-600 dark:text-slate-300 flex items-center gap-1.5 transition">
+            <i data-lucide="receipt" class="w-3.5 h-3.5"></i><span>Payments</span>
+            <span id="tab-badge-pending" class="hidden min-w-[1.25rem] text-center px-1.5 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-extrabold">0</span>
           </button>
-          <button onclick="switchTab('students')" id="tab-btn-students" class="tab-btn px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900">
-            Student Profiles
+          <button onclick="switchTab('students')" id="tab-btn-students" class="tab-btn px-4 py-2 rounded-lg text-slate-600 dark:text-slate-300 flex items-center gap-1.5 transition">
+            <i data-lucide="users" class="w-3.5 h-3.5"></i><span>Students</span>
           </button>
-          <button onclick="switchTab('announcements')" id="tab-btn-announcements" class="tab-btn px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900">
-            Announcements
+          <button onclick="switchTab('announcements')" id="tab-btn-announcements" class="tab-btn px-4 py-2 rounded-lg text-slate-600 dark:text-slate-300 flex items-center gap-1.5 transition">
+            <i data-lucide="megaphone" class="w-3.5 h-3.5"></i><span>Announcements</span>
           </button>
-          <button onclick="switchTab('notifications')" id="tab-btn-notifications" class="tab-btn px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900 flex items-center space-x-1">
-            <i data-lucide="bell" class="w-3.5 h-3.5"></i>
-            <span>Alerts & Bot</span>
+          <button onclick="switchTab('notifications')" id="tab-btn-notifications" class="tab-btn px-4 py-2 rounded-lg text-slate-600 dark:text-slate-300 flex items-center gap-1.5 transition">
+            <i data-lucide="bell" class="w-3.5 h-3.5"></i><span>Tips</span>
           </button>
         </nav>
 
-        <div class="flex items-center space-x-2">
-          <!-- Admin Email Display -->
-          <span id="admin-user-display" class="hidden sm:inline text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg"></span>
+        <div class="flex items-center gap-1.5">
+          <span id="admin-user-display" class="secret-blur hidden xl:inline text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 px-2.5 py-1.5 rounded-lg"></span>
 
-          <!-- Notification Status Badge -->
-          <button onclick="requestNotificationPermission()" id="push-perm-btn" class="px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-bold hover:bg-slate-100 flex items-center space-x-1 text-slate-700">
-            <i data-lucide="bell-ring" class="w-4 h-4 text-brand-navy"></i>
-            <span class="hidden sm:inline">Enable Phone Alerts</span>
+          <button onclick="requestNotificationPermission()" id="push-perm-btn" class="btn-ghost !px-2.5" title="Enable browser alerts">
+            <i data-lucide="bell-ring" class="w-4 h-4 text-brand-600 dark:text-brand-400"></i>
+            <span class="hidden lg:inline">Enable Phone Alerts</span>
           </button>
 
-          <button onclick="handleSignOut()" title="Sign Out" class="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition">
-            <i data-lucide="log-out" class="w-5 h-5"></i>
+          <button onclick="toggleMute()" id="mute-btn" class="btn-ghost !px-2.5" title="Mute / unmute alert sound">
+            <i data-lucide="volume-2" id="mute-icon" class="w-4 h-4"></i>
+          </button>
+
+          <button onclick="toggleTheme()" class="btn-ghost !px-2.5" title="Toggle dark mode (D)">
+            <i data-lucide="moon" id="theme-icon" class="w-4 h-4"></i>
+          </button>
+
+          <button onclick="openShortcuts()" class="btn-ghost !px-2.5 hidden sm:inline-flex" title="Keyboard shortcuts (?)">
+            <i data-lucide="keyboard" class="w-4 h-4"></i>
+          </button>
+
+          <button onclick="handleSignOut()" title="Sign Out" class="btn-ghost !px-2.5 hover:!text-rose-600">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
           </button>
         </div>
-      </div>
-
-      <!-- Mobile Subnav -->
-      <div class="flex md:hidden border-t border-slate-200 px-2 py-2 bg-slate-50 justify-around text-xs font-semibold">
-        <button onclick="switchTab('payments')" class="mobile-tab-btn text-brand-navy font-bold" id="mob-tab-payments">Payments</button>
-        <button onclick="switchTab('students')" class="mobile-tab-btn text-slate-500" id="mob-tab-students">Students</button>
-        <button onclick="switchTab('announcements')" class="mobile-tab-btn text-slate-500" id="mob-tab-announcements">Notices</button>
-        <button onclick="switchTab('notifications')" class="mobile-tab-btn text-slate-500" id="mob-tab-notifications">Alerts</button>
       </div>
     </header>
 
+    <!-- Mobile bottom nav -->
+    <nav class="md:hidden fixed bottom-3 left-3 right-3 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl shadow-slate-900/10 grid grid-cols-4 p-1.5 text-[11px] font-semibold">
+      <button onclick="switchTab('payments')" id="mob-tab-payments" class="relative flex flex-col items-center gap-0.5 py-2 rounded-xl text-slate-500">
+        <i data-lucide="receipt" class="w-5 h-5"></i><span>Payments</span>
+        <span id="mob-badge-pending" class="hidden absolute top-1 right-4 min-w-[1.1rem] text-center px-1 rounded-full bg-amber-500 text-white text-[9px] font-extrabold">0</span>
+      </button>
+      <button onclick="switchTab('students')" id="mob-tab-students" class="flex flex-col items-center gap-0.5 py-2 rounded-xl text-slate-500">
+        <i data-lucide="users" class="w-5 h-5"></i><span>Students</span>
+      </button>
+      <button onclick="switchTab('announcements')" id="mob-tab-announcements" class="flex flex-col items-center gap-0.5 py-2 rounded-xl text-slate-500">
+        <i data-lucide="megaphone" class="w-5 h-5"></i><span>Notices</span>
+      </button>
+      <button onclick="switchTab('notifications')" id="mob-tab-notifications" class="flex flex-col items-center gap-0.5 py-2 rounded-xl text-slate-500">
+        <i data-lucide="bell" class="w-5 h-5"></i><span>Alerts</span>
+      </button>
+    </nav>
+
     <!-- Main Content Area -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      
+
+      <!-- Campus banner (shows once an image is set) -->
+      <section id="dash-hero" class="hidden relative h-32 sm:h-44 rounded-3xl overflow-hidden shadow-lg shadow-slate-900/10">
+        <img id="dash-hero-img" class="w-full h-full object-cover" alt="Jimma University campus" />
+        <div class="absolute inset-0 bg-gradient-to-r from-brand-900/80 via-brand-900/30 to-transparent"></div>
+        <div class="absolute inset-0 p-5 sm:p-7 flex flex-col justify-end text-white">
+          <p class="text-[11px] font-bold uppercase tracking-widest text-brand-200">Jimma University</p>
+          <p class="font-display text-xl sm:text-2xl font-extrabold">JU FreshHub</p>
+        </div>
+      </section>
+
+      <!-- Greeting -->
+      <section class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
+        <div>
+          <h2 id="greeting" class="text-xl sm:text-2xl font-display font-bold text-slate-900 dark:text-white">Welcome back 👋</h2>
+          <p id="greeting-sub" class="text-sm text-slate-500 dark:text-slate-400">Here's what's happening on JU FreshHub right now.</p>
+        </div>
+        <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-2">
+          <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+          <span id="live-clock"></span>
+        </div>
+      </section>
+
       <!-- Metrics Bar -->
-      <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-          <div>
-            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Students</p>
-            <p id="metric-total-students" class="text-2xl font-black text-slate-900 mt-1">0</p>
-          </div>
-          <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-            <i data-lucide="users" class="w-5 h-5"></i>
-          </div>
-        </div>
-
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-          <div>
-            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Pro Unlocked</p>
-            <p id="metric-pro-users" class="text-2xl font-black text-emerald-600 mt-1">0</p>
-          </div>
-          <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <i data-lucide="shield-check" class="w-5 h-5"></i>
+      <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div class="card p-4 sm:p-5 relative overflow-hidden">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Students</p>
+              <p id="metric-total-students" class="text-2xl sm:text-3xl font-display font-extrabold text-slate-900 dark:text-white mt-1">0</p>
+              <p class="text-[11px] mt-1 font-semibold text-brand-600 dark:text-brand-400"><span id="metric-new-today">0</span> new today</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-500/15 text-brand-600 dark:text-brand-400 flex items-center justify-center"><i data-lucide="users" class="w-5 h-5"></i></div>
           </div>
         </div>
 
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-          <div>
-            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Pending Review</p>
-            <p id="metric-pending-payments" class="text-2xl font-black text-amber-600 mt-1">0</p>
-          </div>
-          <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-            <i data-lucide="clock" class="w-5 h-5"></i>
+        <div class="card p-4 sm:p-5 relative overflow-hidden">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Pro Unlocked</p>
+              <p id="metric-pro-users" class="text-2xl sm:text-3xl font-display font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">0</p>
+              <p class="text-[11px] mt-1 font-semibold text-slate-500 dark:text-slate-400"><span id="metric-conversion">0%</span> conversion</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center"><i data-lucide="shield-check" class="w-5 h-5"></i></div>
           </div>
         </div>
 
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-          <div>
-            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Revenue</p>
-            <p id="metric-total-revenue" class="text-2xl font-black text-slate-900 mt-1">0 ETB</p>
+        <div class="card p-4 sm:p-5 relative overflow-hidden">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Pending Review</p>
+              <p id="metric-pending-payments" class="text-2xl sm:text-3xl font-display font-extrabold text-amber-600 dark:text-amber-400 mt-1">0</p>
+              <p class="text-[11px] mt-1 font-semibold text-slate-500 dark:text-slate-400">needs your attention</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center"><i data-lucide="clock" class="w-5 h-5"></i></div>
           </div>
-          <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-            <i data-lucide="wallet" class="w-5 h-5"></i>
+        </div>
+
+        <div class="card p-4 sm:p-5 relative overflow-hidden bg-gradient-to-br from-brand-600 to-brand-900 !border-0 text-white">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-[11px] font-bold text-brand-200 uppercase tracking-wider">Total Revenue</p>
+              <p id="metric-total-revenue" class="text-2xl sm:text-3xl font-display font-extrabold mt-1">0 ETB</p>
+              <p class="text-[11px] mt-1 font-semibold text-brand-200">199 ETB × Pro users</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-white/20 text-white flex items-center justify-center"><i data-lucide="wallet" class="w-5 h-5"></i></div>
           </div>
         </div>
       </section>
 
       <!-- ======================== TAB 1: PAYMENTS & RECEIPTS ======================== -->
       <section id="view-payments" class="space-y-4">
-        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-          <div class="relative flex-1">
-            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
-            <input type="text" id="payment-search" oninput="renderPayments()" placeholder="Search by student name, phone, email, or TxRef..."
-                   class="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:ring-2 focus:ring-brand-navy outline-none" />
+        <div class="card p-3 sm:p-4 space-y-3">
+          <div class="flex flex-col sm:flex-row gap-3 sm:items-center">
+            <div class="relative flex-1">
+              <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+              <input type="text" id="payment-search" oninput="renderPayments()" placeholder="Search by student name, email, account, or TxRef…   ( / )"
+                     class="input pl-10" />
+            </div>
+            <button onclick="exportPaymentsCSV()" class="btn-ghost shrink-0"><i data-lucide="download" class="w-4 h-4"></i><span>Export CSV</span></button>
           </div>
 
-          <div class="flex items-center space-x-2">
-            <span class="text-xs font-bold text-slate-500">Status:</span>
-            <select id="payment-filter" onchange="renderPayments()"
-                    class="px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-white outline-none focus:ring-2 focus:ring-brand-navy">
-              <option value="ALL">All Receipts</option>
-              <option value="PENDING_VERIFICATION" selected>Pending Review</option>
-              <option value="APPROVED">Approved</option>
-              <option value="REJECTED">Rejected</option>
-            </select>
-          </div>
+          <!-- Status chips (drive the hidden select below) -->
+          <div id="payment-chips" class="flex flex-wrap gap-2"></div>
+          <select id="payment-filter" onchange="renderPayments()" class="hidden">
+            <option value="ALL">All Receipts</option>
+            <option value="PENDING_VERIFICATION" selected>Pending Review</option>
+            <option value="APPROVED">Approved</option>
+            <option value="REJECTED">Rejected</option>
+          </select>
         </div>
 
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="card overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-left text-sm">
-              <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold tracking-wider border-b border-slate-200">
+              <thead class="bg-slate-50/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800">
                 <tr>
-                  <th class="py-3.5 px-4">Student</th>
-                  <th class="py-3.5 px-4">Method & Account</th>
-                  <th class="py-3.5 px-4">Tx Reference</th>
-                  <th class="py-3.5 px-4">Amount</th>
-                  <th class="py-3.5 px-4">Screenshot</th>
-                  <th class="py-3.5 px-4">Status</th>
-                  <th class="py-3.5 px-4 text-right">Actions</th>
+                  <th class="th">Student</th>
+                  <th class="th">Method & Account</th>
+                  <th class="th">Tx Reference</th>
+                  <th class="th">Amount</th>
+                  <th class="th">Proof</th>
+                  <th class="th">Status</th>
+                  <th class="th text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody id="payments-tbody" class="divide-y divide-slate-100">
-                <tr>
-                  <td colspan="7" class="text-center py-12 text-slate-400">Listening for payments in real-time...</td>
-                </tr>
+              <tbody id="payments-tbody" class="divide-y divide-slate-100 dark:divide-slate-800">
+                <tr><td colspan="7" class="p-4"><div class="space-y-3"><div class="skeleton h-10"></div><div class="skeleton h-10"></div><div class="skeleton h-10"></div></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -246,41 +400,52 @@
 
       <!-- ======================== TAB 2: STUDENT DIRECTORY ======================== -->
       <section id="view-students" class="hidden space-y-4">
-        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-          <div class="relative flex-1">
-            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
-            <input type="text" id="student-search" oninput="renderStudents()" placeholder="Search students by name, email, or phone..."
-                   class="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:ring-2 focus:ring-brand-navy outline-none" />
+        <div class="card p-3 sm:p-4 space-y-3">
+          <div class="flex flex-col sm:flex-row gap-3 sm:items-center">
+            <div class="relative flex-1">
+              <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+              <input type="text" id="student-search" oninput="renderStudents()" placeholder="Search students by name, email, or phone…   ( / )"
+                     class="input pl-10" />
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Stream</span>
+              <select id="student-stream-filter" onchange="renderStudents()" class="input !w-auto !py-2 text-xs font-semibold">
+                <option value="ALL">All Streams</option>
+                <option value="Natural Science">Natural Science</option>
+                <option value="Social Science">Social Science</option>
+              </select>
+            </div>
+            <button onclick="exportStudentsCSV()" class="btn-ghost shrink-0"><i data-lucide="download" class="w-4 h-4"></i><span>Export CSV</span></button>
           </div>
 
-          <div class="flex items-center space-x-2">
-            <span class="text-xs font-bold text-slate-500">Stream:</span>
-            <select id="student-stream-filter" onchange="renderStudents()"
-                    class="px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-white outline-none focus:ring-2 focus:ring-brand-navy">
-              <option value="ALL">All Streams</option>
-              <option value="Natural Science">Natural Science</option>
-              <option value="Social Science">Social Science</option>
-            </select>
+          <!-- Stream split bar -->
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
+              <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-sky-500"></span>Natural Science <b id="split-ns" class="text-slate-800 dark:text-slate-100">0</b></span>
+              <span class="flex items-center gap-1.5">Social Science <b id="split-ss" class="text-slate-800 dark:text-slate-100">0</b><span class="w-2 h-2 rounded-full bg-brand-gold"></span></span>
+            </div>
+            <div class="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex">
+              <div id="split-bar-ns" class="h-full bg-sky-500 transition-all duration-500" style="width:50%"></div>
+              <div id="split-bar-ss" class="h-full bg-brand-gold transition-all duration-500" style="width:50%"></div>
+            </div>
           </div>
         </div>
 
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="card overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-left text-sm">
-              <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold tracking-wider border-b border-slate-200">
+              <thead class="bg-slate-50/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800">
                 <tr>
-                  <th class="py-3.5 px-4">Name & Email</th>
-                  <th class="py-3.5 px-4">Phone Number</th>
-                  <th class="py-3.5 px-4">Campus & Stream</th>
-                  <th class="py-3.5 px-4">Payment State</th>
-                  <th class="py-3.5 px-4">Pro Access</th>
-                  <th class="py-3.5 px-4 text-right">Quick Toggle</th>
+                  <th class="th">Name & Email</th>
+                  <th class="th">Phone Number</th>
+                  <th class="th">Campus & Stream</th>
+                  <th class="th">Payment State</th>
+                  <th class="th">Pro Access</th>
+                  <th class="th text-right">Quick Toggle</th>
                 </tr>
               </thead>
-              <tbody id="students-tbody" class="divide-y divide-slate-100">
-                <tr>
-                  <td colspan="6" class="text-center py-12 text-slate-400">Loading student directory...</td>
-                </tr>
+              <tbody id="students-tbody" class="divide-y divide-slate-100 dark:divide-slate-800">
+                <tr><td colspan="6" class="p-4"><div class="space-y-3"><div class="skeleton h-10"></div><div class="skeleton h-10"></div><div class="skeleton h-10"></div></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -290,39 +455,46 @@
       <!-- ======================== TAB 3: ANNOUNCEMENTS ======================== -->
       <section id="view-announcements" class="hidden space-y-6">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-            <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
-              <i data-lucide="megaphone" class="w-4 h-4 text-brand-navy"></i>
+          <div class="card p-5 sm:p-6 space-y-4 h-fit lg:sticky lg:top-24">
+            <h3 class="text-base font-display font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <i data-lucide="megaphone" class="w-4 h-4 text-brand-600 dark:text-brand-400"></i>
               <span>Broadcast Announcement</span>
             </h3>
-            <p class="text-xs text-slate-500">Notices published here appear immediately in all students' mobile apps.</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Notices published here appear immediately in all students' mobile apps.</p>
 
-            <form onsubmit="handlePostAnnouncement(event)" class="space-y-4 text-xs font-semibold">
+            <!-- Quick templates -->
+            <div>
+              <label class="label">Quick templates</label>
+              <div class="flex flex-wrap gap-1.5">
+                <button type="button" class="chip" onclick="applyTemplate('exam')">📝 Exam</button>
+                <button type="button" class="chip" onclick="applyTemplate('registration')">🎓 Registration</button>
+                <button type="button" class="chip" onclick="applyTemplate('holiday')">🎉 Holiday</button>
+                <button type="button" class="chip" onclick="applyTemplate('maintenance')">🛠 Maintenance</button>
+              </div>
+            </div>
+
+            <form onsubmit="handlePostAnnouncement(event)" class="space-y-4">
               <div>
-                <label class="block text-slate-700 uppercase mb-1">Title</label>
-                <input type="text" id="ann-title" required placeholder="e.g. Midterm Exam Rooms Released"
-                       class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-navy outline-none" />
+                <label class="label">Title</label>
+                <input type="text" id="ann-title" required placeholder="e.g. Midterm Exam Rooms Released" class="input" />
               </div>
+
+              <input type="hidden" id="ann-tag" value="Dean's Office" />
 
               <div>
-                <label class="block text-slate-700 uppercase mb-1">Tag / Issuer</label>
-                <input type="text" id="ann-tag" required placeholder="e.g. Dean's Office, Academic, Exam" value="Dean's Office"
-                       class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-navy outline-none" />
+                <div class="flex items-center justify-between">
+                  <label class="label">Content</label>
+                  <span id="ann-count" class="text-[10px] font-mono text-slate-400 mb-1.5">0 chars</span>
+                </div>
+                <textarea id="ann-content" required rows="5" oninput="updateAnnCount()" placeholder="Detailed announcement content..." class="input resize-y"></textarea>
               </div>
 
-              <div>
-                <label class="block text-slate-700 uppercase mb-1">Content</label>
-                <textarea id="ann-content" required rows="4" placeholder="Detailed announcement content..."
-                          class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-navy outline-none"></textarea>
-              </div>
+              <label class="flex items-center gap-2 cursor-pointer select-none p-3 rounded-xl bg-rose-50/70 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20">
+                <input type="checkbox" id="ann-priority" class="rounded text-rose-600 focus:ring-rose-500 w-4 h-4" />
+                <span class="text-xs font-bold text-rose-700 dark:text-rose-300">🚨 Mark as Urgent / Priority</span>
+              </label>
 
-              <div class="flex items-center space-x-2">
-                <input type="checkbox" id="ann-priority" class="rounded text-brand-navy focus:ring-brand-navy w-4 h-4" />
-                <label for="ann-priority" class="text-slate-700 font-bold">Mark as Urgent / Priority</label>
-              </div>
-
-              <button type="submit" id="ann-submit-btn"
-                      class="w-full py-2.5 bg-brand-navy hover:bg-slate-900 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center space-x-1.5">
+              <button type="submit" id="ann-submit-btn" class="btn-primary w-full py-2.5 text-sm">
                 <i data-lucide="send" class="w-4 h-4"></i>
                 <span>Publish to App</span>
               </button>
@@ -330,9 +502,9 @@
           </div>
 
           <div class="lg:col-span-2 space-y-3">
-            <h3 class="text-base font-bold text-slate-900 flex items-center justify-between">
+            <h3 class="text-base font-display font-bold text-slate-900 dark:text-white flex items-center justify-between">
               <span>Active Announcements</span>
-              <span id="announcements-count" class="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full font-bold">0</span>
+              <span id="announcements-count" class="text-xs bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2.5 py-1 rounded-full font-bold">0</span>
             </h3>
 
             <div id="announcements-list" class="space-y-3"></div>
@@ -342,81 +514,117 @@
 
       <!-- ======================== TAB 4: ALERTS & TELEGRAM BOT ======================== -->
       <section id="view-notifications" class="hidden space-y-6">
-        <div class="max-w-2xl bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
-          <div class="flex items-center space-x-3">
-            <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold">
-              <i data-lucide="send" class="w-6 h-6"></i>
-            </div>
-            <div>
-              <h3 class="text-base font-bold text-slate-900">Telegram Instant Phone Notifications</h3>
-              <p class="text-xs text-slate-500">ተማሪ ሲመዘገብ ወይም ክፍያ ሲልክ ስልክህ ላይ በቴሌግራም ሜሴጅ ድምጽ አሰምቶ እንዲደርስህ አድርግ</p>
-            </div>
+        <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
+          <!-- Tips card -->
+          <div class="card p-5 sm:p-6 space-y-4 xl:col-span-5 h-fit">
+            <h3 class="text-base font-display font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <i data-lucide="lightbulb" class="w-4 h-4 text-brand-gold"></i> Pro tips & shortcuts
+            </h3>
+            <ul class="space-y-3 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              <li class="flex gap-2.5"><i data-lucide="mouse-pointer-click" class="w-4 h-4 shrink-0 text-brand-500 mt-0.5"></i><span><b>Click any TxRef or phone number</b> to copy it instantly — paste it straight into your Telebirr / CBE app to double-check.</span></li>
+              <li class="flex gap-2.5"><i data-lucide="keyboard" class="w-4 h-4 shrink-0 text-brand-500 mt-0.5"></i><span>Press <span class="kbd">1</span>–<span class="kbd">4</span> to jump between tabs and <span class="kbd">/</span> to focus search. <span class="kbd">?</span> shows all shortcuts.</span></li>
+              <li class="flex gap-2.5"><i data-lucide="download" class="w-4 h-4 shrink-0 text-brand-500 mt-0.5"></i><span><b>Export CSV</b> from Payments or Students for backups, Excel reports and accounting.</span></li>
+              <li class="flex gap-2.5"><i data-lucide="tag" class="w-4 h-4 shrink-0 text-brand-500 mt-0.5"></i><span>The browser tab title shows <b>(N)</b> pending receipts — pin the tab and you'll never miss one.</span></li>
+              <li class="flex gap-2.5"><i data-lucide="volume-x" class="w-4 h-4 shrink-0 text-brand-500 mt-0.5"></i><span>Working late? Use the <b>speaker button</b> to mute the chime — Telegram alerts still come through.</span></li>
+              <li class="flex gap-2.5"><i data-lucide="smartphone" class="w-4 h-4 shrink-0 text-brand-500 mt-0.5"></i><span>On Chrome mobile: menu → <b>Add to Home screen</b> for one-tap access to this portal.</span></li>
+              <li class="flex gap-2.5"><i data-lucide="eye" class="w-4 h-4 shrink-0 text-brand-500 mt-0.5"></i><span>Always open <b>View Proof</b> and compare the amount + TxRef with your bank SMS before approving.</span></li>
+            </ul>
           </div>
-
-          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2 text-slate-600 leading-relaxed">
-            <p class="font-bold text-slate-800">እንዴት ማዋቀር ትችላለህ (1 ደቂቃ)?</p>
-            <ol class="list-decimal pl-4 space-y-1">
-              <li>ቴሌግራም ላይ <b>@BotFather</b> ጋር ሂድና <code class="bg-white px-1.5 py-0.5 rounded border">/newbot</code> ብለህ Bot ፍጠር፤ የተሰጠህን <b>Bot Token</b> ከታች አስገባ።</li>
-              <li>ከዚያ <b>@userinfobot</b> ጋር ሄደህ <code class="bg-white px-1.5 py-0.5 rounded border">/start</code> ስትለው የሚሰጥህን ያንተን <b>Id (Chat ID)</b> አስገባ።</li>
-              <li>የፈጠርከውን ቦት ቴሌግራም ላይ ፈልገህ <code class="bg-white px-1.5 py-0.5 rounded border">/start</code> በለው (መልዕክት እንዲልክልህ ይፈቀድለታል)።</li>
-            </ol>
-          </div>
-
-          <div class="space-y-3">
-            <div>
-              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Telegram Bot Token</label>
-              <input type="text" id="tg-bot-token" placeholder="9082714639:AAGscH5FdluEPIntyAXvp2GB_bO5L7sTTg0"
-                     class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:ring-2 focus:ring-brand-navy outline-none" />
+        </div>
+      
+        <div class="card p-5 sm:p-6 space-y-4">
+          <h3 class="text-base font-display font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <i data-lucide="image" class="w-4 h-4 text-brand-600 dark:text-brand-400"></i> Branding & images
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Upload the JU logo and campus photos. Images are resized automatically and saved in this browser. To make them permanent for everyone, paste image links into <code class="font-mono">JU_BRANDING</code> at the top of the script.</p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="space-y-2">
+              <label class="label">JU logo (login + header)</label>
+              <div class="h-24 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center overflow-hidden bg-slate-50 dark:bg-slate-900">
+                <img id="prev-logo" class="hidden max-h-full object-contain" alt="" /><span id="prev-logo-empty" class="text-xs text-slate-400">No logo yet</span>
+              </div>
+              <div class="flex gap-2">
+                <label class="btn-primary flex-1 cursor-pointer"><i data-lucide="upload" class="w-3.5 h-3.5"></i>Upload<input type="file" accept="image/*" class="hidden" onchange="handleBrandUpload('logo', this)" /></label>
+                <button class="btn-ghost" onclick="resetBrand('logo')">Reset</button>
+              </div>
             </div>
-
-            <div>
-              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Your Telegram Chat ID</label>
-              <input type="text" id="tg-chat-id" placeholder="e.g. 123456789"
-                     class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:ring-2 focus:ring-brand-navy outline-none" />
+            <div class="space-y-2">
+              <label class="label">Login photo</label>
+              <div class="h-24 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center overflow-hidden bg-slate-50 dark:bg-slate-900">
+                <img id="prev-loginPhoto" class="hidden w-full h-full object-cover" alt="" /><span id="prev-loginPhoto-empty" class="text-xs text-slate-400">No photo yet</span>
+              </div>
+              <div class="flex gap-2">
+                <label class="btn-primary flex-1 cursor-pointer"><i data-lucide="upload" class="w-3.5 h-3.5"></i>Upload<input type="file" accept="image/*" class="hidden" onchange="handleBrandUpload('loginPhoto', this)" /></label>
+                <button class="btn-ghost" onclick="resetBrand('loginPhoto')">Reset</button>
+              </div>
             </div>
-
-            <div class="flex gap-2 pt-2">
-              <button onclick="saveTelegramSettings()" class="flex-1 py-2.5 bg-brand-navy hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition">
-                Save Telegram Settings
-              </button>
-              <button onclick="testTelegramNotification()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
-                Test Alert Now
-              </button>
+            <div class="space-y-2">
+              <label class="label">Dashboard banner</label>
+              <div class="h-24 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center overflow-hidden bg-slate-50 dark:bg-slate-900">
+                <img id="prev-dashPhoto" class="hidden w-full h-full object-cover" alt="" /><span id="prev-dashPhoto-empty" class="text-xs text-slate-400">No banner yet</span>
+              </div>
+              <div class="flex gap-2">
+                <label class="btn-primary flex-1 cursor-pointer"><i data-lucide="upload" class="w-3.5 h-3.5"></i>Upload<input type="file" accept="image/*" class="hidden" onchange="handleBrandUpload('dashPhoto', this)" /></label>
+                <button class="btn-ghost" onclick="resetBrand('dashPhoto')">Reset</button>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
+      <footer class="pt-4 pb-2 text-center text-[11px] text-slate-400 dark:text-slate-500 no-print">
+        Alpha Tech Ⓒ All Right reserved 2026 · Authorized By: Wondmagegn Yohannes
+      </footer>
     </main>
   </div>
 
   <!-- ======================== SCREENSHOT MODAL ======================== -->
-  <div id="screenshot-modal" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
-      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-        <div>
-          <h3 id="modal-title" class="text-sm font-bold text-slate-900">Payment Screenshot</h3>
-          <p id="modal-subtitle" class="text-xs text-slate-500 font-mono"></p>
+  <div id="screenshot-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onclick="if(event.target===this) closeScreenshotModal()">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full max-h-[92vh] flex flex-col overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800">
+      <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <div class="min-w-0">
+          <h3 id="modal-title" class="text-sm font-display font-bold text-slate-900 dark:text-white truncate">Payment Screenshot</h3>
+          <p id="modal-subtitle" class="text-xs text-slate-500 dark:text-slate-400 font-mono truncate"></p>
         </div>
-        <button onclick="closeScreenshotModal()" class="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700">
+        <button onclick="closeScreenshotModal()" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
       <div class="flex-1 overflow-auto p-4 flex items-center justify-center bg-slate-950">
-        <img id="modal-image" src="" alt="Payment Receipt" class="max-w-full max-h-[65vh] object-contain rounded-lg" />
+        <img id="modal-image" src="" alt="Payment Receipt" onclick="toggleZoom()" class="max-w-full max-h-[65vh] object-contain rounded-lg cursor-zoom-in transition-transform" />
         <div id="modal-no-image" class="hidden text-slate-400 text-sm">No screenshot available for this submission.</div>
       </div>
 
-      <div class="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
-        <a id="modal-open-tab" href="#" target="_blank" class="text-xs text-brand-navy hover:underline font-bold flex items-center space-x-1">
-          <span>Open Full Size in New Tab</span>
+      <div class="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 flex items-center justify-between gap-2">
+        <a id="modal-open-tab" href="#" target="_blank" rel="noopener" class="text-xs text-brand-700 dark:text-brand-400 hover:underline font-bold flex items-center gap-1">
+          <span>Open Full Size</span>
           <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
         </a>
-        <button onclick="closeScreenshotModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg text-xs">
-          Close
-        </button>
+        <span class="hidden sm:inline text-[11px] text-slate-400">Click image to zoom · <span class="kbd">Esc</span> to close</span>
+        <button onclick="closeScreenshotModal()" class="btn-ghost">Close</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ======================== SHORTCUTS MODAL ======================== -->
+  <div id="shortcuts-modal" class="hidden fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onclick="if(event.target===this) closeShortcuts()">
+    <div class="card !bg-white dark:!bg-slate-900 max-w-sm w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <h3 class="font-display font-bold text-slate-900 dark:text-white flex items-center gap-2"><i data-lucide="keyboard" class="w-4 h-4 text-brand-500"></i> Keyboard shortcuts</h3>
+        <button onclick="closeShortcuts()" class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <ul class="space-y-2.5 text-sm text-slate-600 dark:text-slate-300">
+        <li class="flex justify-between"><span>Payments tab</span><span class="kbd">1</span></li>
+        <li class="flex justify-between"><span>Students tab</span><span class="kbd">2</span></li>
+        <li class="flex justify-between"><span>Announcements tab</span><span class="kbd">3</span></li>
+        <li class="flex justify-between"><span>Alerts & Bot tab</span><span class="kbd">4</span></li>
+        <li class="flex justify-between"><span>Focus search</span><span class="kbd">/</span></li>
+        <li class="flex justify-between"><span>Toggle dark mode</span><span class="kbd">D</span></li>
+        <li class="flex justify-between"><span>Mute / unmute chime</span><span class="kbd">M</span></li>
+        <li class="flex justify-between"><span>Show this help</span><span class="kbd">?</span></li>
+        <li class="flex justify-between"><span>Close any dialog</span><span class="kbd">Esc</span></li>
+      </ul>
     </div>
   </div>
 
@@ -445,6 +653,7 @@
       lucide.createIcons();
       loadTelegramSettings();
       setupAuthListener();
+      initUI();
     });
 
     function setupAuthListener() {
@@ -453,8 +662,9 @@
           document.getElementById('auth-modal').classList.add('hidden');
           document.getElementById('app-container').classList.remove('hidden');
           const displayEl = document.getElementById('admin-user-display');
-          if (displayEl) displayEl.innerText = user.email;
+          if (displayEl) { displayEl.innerText = user.email; displayEl.classList.remove('hidden'); }
           startFirestoreListeners();
+          lucide.createIcons();
         } else if (user) {
           document.getElementById('auth-modal').classList.remove('hidden');
           document.getElementById('app-container').classList.add('hidden');
@@ -504,7 +714,7 @@
 
       try {
         await auth.createUserWithEmailAndPassword(email, password);
-        alert("Admin account created successfully!");
+        toast("Admin account created successfully!", "success");
       } catch (err) {
         showAuthError(err.message);
       }
@@ -522,7 +732,7 @@
     function triggerPhoneAlert(title, message, isPayment = false) {
       // 1. የድምፅ ደወል (Audio Alert)
       const sound = document.getElementById('notif-sound');
-      if (sound) {
+      if (sound && !isMuted()) {
         sound.play().catch(() => {});
       }
 
@@ -536,16 +746,19 @@
 
       // 3. Telegram Instant Alert
       sendTelegramMessage(`🔔 *${title}*\n\n${message}`);
+
+      // In-app toast
+      toast(`${title}\n${message}`, isPayment ? "warn" : "info", 7000);
     }
 
     function requestNotificationPermission() {
       if (!("Notification" in window)) {
-        alert("This browser does not support desktop notifications.");
+        toast("This browser does not support desktop notifications.", "error");
         return;
       }
       Notification.requestPermission().then(permission => {
         if (permission === "granted") {
-          alert("Phone notifications are active! You will get alerts when students register or pay.");
+          toast("Phone notifications are active! You will get alerts when students register or pay.", "success");
           new Notification("JU FreshHub Alerts Active", { body: "You will receive live alerts for registrations and payments." });
         }
       });
@@ -554,8 +767,10 @@
     function loadTelegramSettings() {
       const token = localStorage.getItem('ju_tg_bot_token') || '';
       const chatId = localStorage.getItem('ju_tg_chat_id') || '';
-      document.getElementById('tg-bot-token').value = token;
-      document.getElementById('tg-chat-id').value = chatId;
+      const tokEl = document.getElementById('tg-bot-token');
+      const chatEl = document.getElementById('tg-chat-id');
+      if (tokEl) tokEl.value = token;
+      if (chatEl) chatEl.value = chatId;
     }
 
     function saveTelegramSettings() {
@@ -563,7 +778,7 @@
       const chatId = document.getElementById('tg-chat-id').value.trim();
       localStorage.setItem('ju_tg_bot_token', token);
       localStorage.setItem('ju_tg_chat_id', chatId);
-      alert("Telegram notification settings saved!");
+      toast("Telegram notification settings saved!", "success");
     }
 
     async function sendTelegramMessage(text) {
@@ -590,12 +805,12 @@
       const token = document.getElementById('tg-bot-token').value.trim();
       const chatId = document.getElementById('tg-chat-id').value.trim();
       if (!token || !chatId) {
-        alert("Please enter both Bot Token and Chat ID first.");
+        toast("Please enter both Bot Token and Chat ID first.", "error");
         return;
       }
       sendTelegramMessage("🎓 *JU FreshHub Test Alert*\n\nይህ የሙከራ መልዕክት ነው! ተማሪ ሲመዘገብ ወይም ክፍያ ሲልክ በዚህ መልኩ ስልክህ ላይ ማስታወቂያ ይደርስሃል።")
-        .then(() => alert("Test alert sent to your Telegram! Check your phone."))
-        .catch(err => alert("Failed to send: " + err));
+        .then(() => toast("Test alert sent to your Telegram! Check your phone.", "success"))
+        .catch(err => toast("Failed to send: " + err, "error"));
     }
 
     // Helper to safely extract milliseconds from Firestore timestamps or date strings
@@ -622,7 +837,8 @@
                 const data = change.doc.data();
                 triggerPhoneAlert(
                   "💰 አዲስ የክፍያ ደረሰኝ ደርሷል!",
-                  `ተማሪ: ${data.userName || 'Student'}\nክፍያ: ${data.amountEtb || 199} ETB (${data.paymentMethod || 'Telebirr'})\nTxRef: ${data.transactionReference || 'N/A'}`
+                  `ተማሪ: ${data.userName || 'Student'}\nክፍያ: ${data.amountEtb || 199} ETB (${data.paymentMethod || 'Telebirr'})\nTxRef: ${data.transactionReference || 'N/A'}`,
+                  true
                 );
               }
             });
@@ -630,13 +846,14 @@
 
           rawPayments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           rawPayments.sort((a, b) => getTimestampMs(b.createdAt) - getTimestampMs(a.createdAt));
+          markSynced();
           updateMetrics();
           renderPayments();
         }, (err) => {
           console.error("Payment listener error:", err);
           const tbody = document.getElementById('payments-tbody');
           if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-red-500 font-semibold">Error reading payments: ${escapeHtml(err.message)}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-rose-500 font-semibold">Error reading payments: ${escapeHtml(err.message)}</td></tr>`;
           }
         });
 
@@ -657,6 +874,7 @@
 
           rawUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           rawUsers.sort((a, b) => getTimestampMs(b.createdAt) - getTimestampMs(a.createdAt));
+          markSynced();
           updateMetrics();
           renderStudents();
           isInitialLoad = false;
@@ -664,7 +882,7 @@
           console.error("Users listener error:", err);
           const tbody = document.getElementById('students-tbody');
           if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-red-500 font-semibold">Error reading students: ${escapeHtml(err.message)}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-rose-500 font-semibold">Error reading students: ${escapeHtml(err.message)}</td></tr>`;
           }
         });
 
@@ -689,12 +907,68 @@
       document.getElementById('metric-pro-users').innerText = proUsers;
       document.getElementById('metric-pending-payments').innerText = pendingReviews;
       document.getElementById('metric-total-revenue').innerText = `${totalRevenue.toLocaleString()} ETB`;
+
+      // Extra insights (UI only)
+      const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
+      const newToday = rawUsers.filter(u => getTimestampMs(u.createdAt) >= startOfToday.getTime()).length;
+      document.getElementById('metric-new-today').innerText = newToday;
+      document.getElementById('metric-conversion').innerText = totalStudents ? `${Math.round((proUsers / totalStudents) * 100)}%` : '0%';
+
+      // Pending badges + tab title
+      ['tab-badge-pending', 'mob-badge-pending'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.innerText = pendingReviews;
+        el.classList.toggle('hidden', pendingReviews === 0);
+      });
+      document.title = (pendingReviews > 0 ? `(${pendingReviews}) ` : '') + 'JU FreshHub — Admin & Notification Portal';
+
+      // Stream split
+      const ns = rawUsers.filter(u => (u.stream || 'Natural Science') === 'Natural Science').length;
+      const ss = totalStudents - ns;
+      document.getElementById('split-ns').innerText = ns;
+      document.getElementById('split-ss').innerText = ss;
+      const nsPct = totalStudents ? (ns / totalStudents) * 100 : 50;
+      document.getElementById('split-bar-ns').style.width = nsPct + '%';
+      document.getElementById('split-bar-ss').style.width = (100 - nsPct) + '%';
+
+      // Greeting subline
+      document.getElementById('greeting-sub').innerText = pendingReviews > 0
+        ? `You have ${pendingReviews} receipt${pendingReviews > 1 ? 's' : ''} waiting for review.`
+        : "You're all caught up — no receipts waiting for review. ✨";
+    }
+
+    function renderPaymentChips(counts, active) {
+      const defs = [
+        ['PENDING_VERIFICATION', 'Pending', 'clock'],
+        ['APPROVED', 'Approved', 'check-circle-2'],
+        ['REJECTED', 'Rejected', 'x-circle'],
+        ['ALL', 'All', 'layers'],
+      ];
+      document.getElementById('payment-chips').innerHTML = defs.map(([val, label, icon]) => `
+        <button class="chip ${active === val ? 'chip-active' : ''}" onclick="setPaymentFilter('${val}')">
+          <i data-lucide="${icon}" class="w-3.5 h-3.5"></i>${label}
+          <span class="${active === val ? 'bg-white/25' : 'bg-slate-100 dark:bg-slate-800'} px-1.5 rounded-full text-[10px] font-extrabold">${counts[val] || 0}</span>
+        </button>`).join('');
+    }
+
+    function setPaymentFilter(val) {
+      document.getElementById('payment-filter').value = val;
+      renderPayments();
     }
 
     function renderPayments() {
       const tbody = document.getElementById('payments-tbody');
       const search = document.getElementById('payment-search').value.toLowerCase().trim();
       const filter = document.getElementById('payment-filter').value;
+
+      const counts = {
+        ALL: rawPayments.length,
+        PENDING_VERIFICATION: rawPayments.filter(p => p.status === 'PENDING_VERIFICATION').length,
+        APPROVED: rawPayments.filter(p => p.status === 'APPROVED').length,
+        REJECTED: rawPayments.filter(p => p.status === 'REJECTED' || p.status === 'REVOKED').length,
+      };
+      renderPaymentChips(counts, filter);
 
       const filtered = rawPayments.filter(item => {
         const matchesStatus = filter === 'ALL' || item.status === filter;
@@ -707,36 +981,49 @@
       });
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-slate-400">No payment receipts found matching criteria.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-14">
+          <div class="mx-auto w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-3"><i data-lucide="inbox" class="w-6 h-6"></i></div>
+          <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">No payment receipts found matching criteria.</p>
+          <p class="text-xs text-slate-400 mt-1">Try a different status chip or clear the search.</p></td></tr>`;
+        lucide.createIcons();
         return;
       }
 
       tbody.innerHTML = filtered.map(p => {
         const statusBadge = getStatusBadge(p.status);
         const hasImage = p.screenshotUrl || (p.screenshotBase64 && p.screenshotBase64.length > 50);
+        const isPending = p.status === 'PENDING_VERIFICATION';
+        const ago = timeAgo(getTimestampMs(p.createdAt));
 
         return `
-          <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+          <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition ${isPending ? 'row-pending' : ''}">
             <td class="py-3 px-4">
-              <div class="font-bold text-slate-900">${escapeHtml(p.userName || 'Student')}</div>
-              <div class="text-xs text-slate-500 font-mono">${escapeHtml(p.userEmail || '')}</div>
+              <div class="flex items-center gap-3">
+                ${avatar(p.userName || 'Student')}
+                <div class="min-w-0">
+                  <div class="font-bold text-slate-900 dark:text-white truncate">${escapeHtml(p.userName || 'Student')}</div>
+                  <div class="text-xs text-slate-500 dark:text-slate-400 font-mono truncate">${escapeHtml(p.userEmail || '')}</div>
+                  ${ago ? `<div class="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1"><i data-lucide="clock-3" class="w-3 h-3"></i>${ago}</div>` : ''}
+                </div>
+              </div>
             </td>
             <td class="py-3 px-4">
-              <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-700 mb-0.5">
+              <span class="inline-block px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 mb-0.5">
                 ${escapeHtml(p.paymentMethod || 'Transfer')}
               </span>
-              <div class="text-xs text-slate-500 font-mono">${escapeHtml(p.accountPaidTo || 'Account')}</div>
+              <div class="text-xs text-slate-500 dark:text-slate-400 font-mono copyable" data-copy="${escapeAttr(p.accountPaidTo || '')}" title="Click to copy">${escapeHtml(p.accountPaidTo || 'Account')}</div>
             </td>
             <td class="py-3 px-4">
-              <span class="font-mono text-xs font-bold text-brand-navy bg-blue-50 px-2 py-1 rounded">
+              <span class="copyable inline-flex items-center gap-1.5 font-mono text-xs font-bold text-brand-700 dark:text-brand-200 bg-brand-50 dark:bg-brand-500/15 px-2 py-1 rounded-lg"
+                    data-copy="${escapeAttr(p.transactionReference || '')}" title="Click to copy">
                 ${escapeHtml(p.transactionReference || 'N/A')}
+                <i data-lucide="copy" class="w-3 h-3 opacity-60"></i>
               </span>
             </td>
-            <td class="py-3 px-4 font-black text-slate-800">${p.amountEtb || 199} ETB</td>
+            <td class="py-3 px-4 font-display font-extrabold text-slate-800 dark:text-slate-100 whitespace-nowrap">${p.amountEtb || 199} <span class="text-[11px] font-bold text-slate-400">ETB</span></td>
             <td class="py-3 px-4">
               ${hasImage ? `
-                <button onclick="viewReceipt('${p.id}')"
-                        class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center space-x-1 transition">
+                <button onclick="viewReceipt('${p.id}')" class="btn-ghost !py-1.5">
                   <i data-lucide="image" class="w-3.5 h-3.5"></i>
                   <span>View Proof</span>
                 </button>
@@ -745,20 +1032,17 @@
             <td class="py-3 px-4">${statusBadge}</td>
             <td class="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
               ${p.status !== 'APPROVED' ? `
-                <button onclick="approvePayment('${p.id}', '${p.userId}')"
-                        class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm transition inline-flex items-center space-x-1">
+                <button onclick="approvePayment('${p.id}', '${p.userId}')" class="btn-ok">
                   <i data-lucide="check" class="w-3.5 h-3.5"></i>
                   <span>Approve</span>
                 </button>
               ` : `
-                <button onclick="revokePayment('${p.id}', '${p.userId}')"
-                        class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-medium transition">
+                <button onclick="revokePayment('${p.id}', '${p.userId}')" class="btn-ghost">
                   Revoke
                 </button>
               `}
               ${p.status !== 'REJECTED' && p.status !== 'APPROVED' ? `
-                <button onclick="rejectPayment('${p.id}')"
-                        class="px-2 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-xs font-bold transition inline-flex items-center">
+                <button onclick="rejectPayment('${p.id}')" class="btn-danger !px-2" title="Reject">
                   <i data-lucide="x" class="w-3.5 h-3.5"></i>
                 </button>
               ` : ''}
@@ -785,35 +1069,48 @@
       });
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-slate-400">No students found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-14">
+          <div class="mx-auto w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-3"><i data-lucide="user-x" class="w-6 h-6"></i></div>
+          <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">No students found.</p></td></tr>`;
+        lucide.createIcons();
         return;
       }
 
       tbody.innerHTML = filtered.map(u => {
         const isPro = u.isProUnlocked === true || u.paymentStatus === 'APPROVED';
+        const joined = timeAgo(getTimestampMs(u.createdAt));
         return `
-          <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+          <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
             <td class="py-3 px-4">
-              <div class="font-bold text-slate-900">${escapeHtml(u.displayName || 'JU Student')}</div>
-              <div class="text-xs text-slate-500">${escapeHtml(u.email || '')}</div>
-            </td>
-            <td class="py-3 px-4 font-mono text-xs font-semibold text-slate-700">
-              ${escapeHtml(u.phoneNumber || 'Not provided')}
+              <div class="flex items-center gap-3">
+                ${avatar(u.displayName || 'JU Student')}
+                <div class="min-w-0">
+                  <div class="font-bold text-slate-900 dark:text-white truncate">${escapeHtml(u.displayName || 'JU Student')}</div>
+                  <div class="text-xs text-slate-500 dark:text-slate-400 truncate">${escapeHtml(u.email || '')}</div>
+                  ${joined ? `<div class="text-[11px] text-slate-400 mt-0.5">Joined ${joined}</div>` : ''}
+                </div>
+              </div>
             </td>
             <td class="py-3 px-4">
-              <div class="text-xs font-semibold text-slate-800">${escapeHtml(u.campus || 'Main Campus')}</div>
-              <div class="text-[11px] text-slate-500">${escapeHtml(u.stream || 'Natural Science')}</div>
+              <span class="copyable font-mono text-xs font-semibold text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5" data-copy="${escapeAttr(u.phoneNumber || '')}" title="Click to copy">
+                ${escapeHtml(u.phoneNumber || 'Not provided')}
+                ${u.phoneNumber ? `<i data-lucide="copy" class="w-3 h-3 opacity-50"></i>` : ''}
+              </span>
+              ${u.phoneNumber ? `<a href="tel:${escapeAttr(u.phoneNumber)}" class="ml-2 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline">Call</a>` : ''}
+            </td>
+            <td class="py-3 px-4">
+              <div class="text-xs font-semibold text-slate-800 dark:text-slate-100">${escapeHtml(u.campus || 'Main Campus')}</div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400">${escapeHtml(u.stream || 'Natural Science')}</div>
             </td>
             <td class="py-3 px-4">${getStatusBadge(u.paymentStatus || (isPro ? 'APPROVED' : 'UNPAID'))}</td>
             <td class="py-3 px-4">
-              <span class="inline-flex items-center text-xs font-bold ${isPro ? 'text-emerald-600' : 'text-slate-400'}">
-                <span class="w-2 h-2 rounded-full ${isPro ? 'bg-emerald-500' : 'bg-slate-300'} mr-1.5"></span>
+              <span class="inline-flex items-center text-xs font-bold ${isPro ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}">
+                <span class="w-2 h-2 rounded-full ${isPro ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'} mr-1.5"></span>
                 ${isPro ? 'Active Pro' : 'Free / Locked'}
               </span>
             </td>
             <td class="py-3 px-4 text-right">
-              <button onclick="toggleUserPro('${u.id}', ${!isPro})"
-                      class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${isPro ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' : 'bg-brand-navy text-white hover:bg-slate-900'}">
+              <button onclick="toggleUserPro('${u.id}', ${!isPro})" class="${isPro ? 'btn-warn' : 'btn-primary'}">
                 ${isPro ? 'Revoke Pro' : 'Grant Pro'}
               </button>
             </td>
@@ -829,26 +1126,29 @@
       document.getElementById('announcements-count').innerText = rawAnnouncements.length;
 
       if (rawAnnouncements.length === 0) {
-        container.innerHTML = `<div class="bg-white p-8 rounded-2xl border text-center text-slate-400 text-sm">No announcements posted yet.</div>`;
+        container.innerHTML = `<div class="card p-10 text-center text-slate-400 text-sm">
+          <div class="mx-auto w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3"><i data-lucide="megaphone" class="w-6 h-6"></i></div>
+          No announcements posted yet.</div>`;
+        lucide.createIcons();
         return;
       }
 
       container.innerHTML = rawAnnouncements.map(a => `
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-brand-navy border border-blue-200">
+        <div class="card p-5 space-y-2 ${a.priority ? '!border-rose-300 dark:!border-rose-500/40' : ''}">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center flex-wrap gap-2">
+              <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-brand-50 dark:bg-brand-500/15 text-brand-700 dark:text-brand-200 border border-brand-200 dark:border-brand-500/30">
                 ${escapeHtml(a.tag || 'Notice')}
               </span>
-              ${a.priority ? `<span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-red-100 text-red-700">URGENT</span>` : ''}
+              ${a.priority ? `<span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300">URGENT</span>` : ''}
               <span class="text-xs text-slate-400 font-medium">${escapeHtml(a.date || '')}</span>
             </div>
-            <button onclick="deleteAnnouncement('${a.id}')" title="Delete Announcement" class="text-slate-400 hover:text-red-600 p-1 rounded">
+            <button onclick="deleteAnnouncement('${a.id}')" title="Delete Announcement" class="text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 p-1.5 rounded-lg transition">
               <i data-lucide="trash-2" class="w-4 h-4"></i>
             </button>
           </div>
-          <h4 class="font-bold text-slate-900 text-sm sm:text-base">${escapeHtml(a.title)}</h4>
-          <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">${escapeHtml(a.content)}</p>
+          <h4 class="font-display font-bold text-slate-900 dark:text-white text-sm sm:text-base">${escapeHtml(a.title)}</h4>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">${escapeHtml(a.content)}</p>
         </div>
       `).join('');
 
@@ -878,10 +1178,10 @@
         }
 
         await batch.commit();
-        alert("Payment approved and Pro unlocked for the student!");
+        toast("Payment approved and Pro unlocked for the student!", "success");
       } catch (err) {
         console.error("Approval error:", err);
-        alert("Error approving payment: " + err.message);
+        toast("Error approving payment: " + err.message, "error");
       }
     }
 
@@ -896,8 +1196,9 @@
           reviewedAt: firebase.firestore.FieldValue.serverTimestamp(),
           reviewedBy: 'ninjaabi213@gmail.com'
         });
+        toast("Receipt rejected.", "info");
       } catch (err) {
-        alert("Error rejecting payment: " + err.message);
+        toast("Error rejecting payment: " + err.message, "error");
       }
     }
 
@@ -920,8 +1221,9 @@
           }, { merge: true });
         }
         await batch.commit();
+        toast("Approval revoked.", "info");
       } catch (err) {
-        alert("Error revoking access: " + err.message);
+        toast("Error revoking access: " + err.message, "error");
       }
     }
 
@@ -942,8 +1244,9 @@
         }
 
         await db.collection('users').doc(userId).set(updateData, { merge: true });
+        toast(makePro ? "Pro access granted." : "Pro access revoked.", "success");
       } catch (err) {
-        alert("Error updating user: " + err.message);
+        toast("Error updating user: " + err.message, "error");
       }
     }
 
@@ -973,9 +1276,10 @@
         document.getElementById('ann-title').value = '';
         document.getElementById('ann-content').value = '';
         document.getElementById('ann-priority').checked = false;
-        alert("Announcement broadcasted successfully to all JU FreshHub apps!");
+        updateAnnCount();
+        toast("Announcement broadcasted successfully to all JU FreshHub apps!", "success");
       } catch (err) {
-        alert("Failed to publish: " + err.message);
+        toast("Failed to publish: " + err.message, "error");
       } finally {
         btn.disabled = false;
       }
@@ -985,8 +1289,9 @@
       if (!confirm("Delete this announcement?")) return;
       try {
         await db.collection('announcements').doc(id).delete();
+        toast("Announcement deleted.", "info");
       } catch (err) {
-        alert("Failed to delete: " + err.message);
+        toast("Failed to delete: " + err.message, "error");
       }
     }
 
@@ -1026,7 +1331,11 @@
 
     function closeScreenshotModal() {
       document.getElementById('screenshot-modal').classList.add('hidden');
-      document.getElementById('modal-image').src = "";
+      const img = document.getElementById('modal-image');
+      img.src = "";
+      img.style.transform = '';
+      img.classList.add('cursor-zoom-in');
+      img.classList.remove('cursor-zoom-out');
     }
 
     function switchTab(tabId) {
@@ -1037,38 +1346,34 @@
 
         if (tab === tabId) {
           view.classList.remove('hidden');
-          if (btn) {
-            btn.classList.add('bg-white', 'shadow-sm', 'text-brand-navy', 'font-bold');
-            btn.classList.remove('text-slate-600');
-          }
+          if (btn) btn.classList.add('active');
           if (mobBtn) {
-            mobBtn.classList.add('text-brand-navy', 'font-bold');
+            mobBtn.classList.add('text-brand-700', 'dark:text-brand-200', 'bg-brand-50', 'dark:bg-brand-500/15', 'font-bold');
             mobBtn.classList.remove('text-slate-500');
           }
         } else {
           view.classList.add('hidden');
-          if (btn) {
-            btn.classList.remove('bg-white', 'shadow-sm', 'text-brand-navy', 'font-bold');
-            btn.classList.add('text-slate-600');
-          }
+          if (btn) btn.classList.remove('active');
           if (mobBtn) {
-            mobBtn.classList.remove('text-brand-navy', 'font-bold');
+            mobBtn.classList.remove('text-brand-700', 'dark:text-brand-200', 'bg-brand-50', 'dark:bg-brand-500/15', 'font-bold');
             mobBtn.classList.add('text-slate-500');
           }
         }
       });
+      try { localStorage.setItem('ju_last_tab', tabId); } catch (e) {}
+      lucide.createIcons();
     }
 
     function getStatusBadge(status) {
       const s = (status || 'UNPAID').toUpperCase();
       if (s === 'APPROVED' || s === 'PAID') {
-        return `<span class="px-2.5 py-1 rounded-full text-xs font-bold badge-approved">Approved</span>`;
+        return `<span class="badge badge-approved"><i data-lucide="check-circle-2" class="w-3 h-3"></i>Approved</span>`;
       } else if (s === 'PENDING_VERIFICATION') {
-        return `<span class="px-2.5 py-1 rounded-full text-xs font-bold badge-pending animate-pulse">Pending Review</span>`;
+        return `<span class="badge badge-pending"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 pulse-dot"></span>Pending Review</span>`;
       } else if (s === 'REJECTED' || s === 'REVOKED') {
-        return `<span class="px-2.5 py-1 rounded-full text-xs font-bold badge-rejected">Rejected</span>`;
+        return `<span class="badge badge-rejected"><i data-lucide="x-circle" class="w-3 h-3"></i>Rejected</span>`;
       } else {
-        return `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-500">Unpaid</span>`;
+        return `<span class="badge badge-unpaid">Unpaid</span>`;
       }
     }
 
@@ -1077,6 +1382,316 @@
       const div = document.createElement('div');
       div.innerText = text;
       return div.innerHTML;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // ✨ UI HELPERS (design & productivity features — no data logic)
+    // ─────────────────────────────────────────────────────────────
+    function escapeAttr(text) {
+      return escapeHtml(String(text || '')).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function avatar(name) {
+      const clean = String(name || '?').trim();
+      const initials = clean.split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || '?';
+      let hash = 0;
+      for (let i = 0; i < clean.length; i++) hash = (hash * 31 + clean.charCodeAt(i)) % 360;
+      return `<div class="w-9 h-9 shrink-0 rounded-xl flex items-center justify-center text-xs font-extrabold text-white shadow-sm"
+                   style="background:linear-gradient(135deg,hsl(${hash} 70% 55%),hsl(${(hash + 40) % 360} 70% 42%))">${escapeHtml(initials)}</div>`;
+    }
+
+    function timeAgo(ms) {
+      if (!ms) return '';
+      const diff = Date.now() - ms;
+      const s = Math.floor(diff / 1000);
+      if (s < 45) return 'just now';
+      const m = Math.floor(s / 60);
+      if (m < 60) return `${m}m ago`;
+      const h = Math.floor(m / 60);
+      if (h < 24) return `${h}h ago`;
+      const d = Math.floor(h / 24);
+      if (d < 7) return `${d}d ago`;
+      return new Date(ms).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    // Toasts
+    function toast(message, type = 'info', duration = 4000) {
+      const root = document.getElementById('toast-root');
+      if (!root) return;
+      const styles = {
+        success: ['bg-emerald-600', 'check-circle-2'],
+        error:   ['bg-rose-600', 'alert-triangle'],
+        warn:    ['bg-amber-500', 'bell-ring'],
+        info:    ['bg-slate-900 dark:bg-slate-700', 'info'],
+      };
+      const [bg, icon] = styles[type] || styles.info;
+      const el = document.createElement('div');
+      el.className = `pointer-events-auto animate-toastIn ${bg} text-white rounded-xl shadow-xl px-4 py-3 text-xs font-semibold flex gap-3 items-start`;
+      el.innerHTML = `<i data-lucide="${icon}" class="w-4 h-4 mt-0.5 shrink-0"></i><div class="whitespace-pre-line leading-relaxed flex-1">${escapeHtml(String(message))}</div>
+                      <button class="opacity-70 hover:opacity-100" aria-label="Dismiss"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>`;
+      el.querySelector('button').onclick = () => el.remove();
+      root.appendChild(el);
+      lucide.createIcons();
+      setTimeout(() => { el.style.transition = 'opacity .3s'; el.style.opacity = 0; setTimeout(() => el.remove(), 300); }, duration);
+    }
+
+    // Copy to clipboard (event delegation)
+    document.addEventListener('click', (e) => {
+      const el = e.target.closest('[data-copy]');
+      if (!el) return;
+      const val = el.getAttribute('data-copy');
+      if (!val) return;
+      (navigator.clipboard ? navigator.clipboard.writeText(val) : Promise.reject())
+        .then(() => toast(`Copied: ${val}`, 'success', 1800))
+        .catch(() => {
+          const ta = document.createElement('textarea'); ta.value = val; document.body.appendChild(ta); ta.select();
+          try { document.execCommand('copy'); toast(`Copied: ${val}`, 'success', 1800); } catch (_) {}
+          ta.remove();
+        });
+    });
+
+    // Theme
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      try { localStorage.setItem('ju_theme', isDark ? 'dark' : 'light'); } catch (e) {}
+      syncThemeIcon();
+    }
+    function syncThemeIcon() {
+      const isDark = document.documentElement.classList.contains('dark');
+      const icon = document.getElementById('theme-icon');
+      if (icon) { icon.setAttribute('data-lucide', isDark ? 'sun' : 'moon'); lucide.createIcons(); }
+    }
+
+    // Mute chime
+    function isMuted() { try { return localStorage.getItem('ju_muted') === '1'; } catch (e) { return false; } }
+    function toggleMute() {
+      const next = !isMuted();
+      try { localStorage.setItem('ju_muted', next ? '1' : '0'); } catch (e) {}
+      syncMuteIcon();
+      toast(next ? 'Chime muted (Telegram alerts still active).' : 'Chime enabled.', 'info', 2000);
+    }
+    function syncMuteIcon() {
+      const icon = document.getElementById('mute-icon');
+      if (icon) { icon.setAttribute('data-lucide', isMuted() ? 'volume-x' : 'volume-2'); lucide.createIcons(); }
+    }
+
+    // Password / token visibility
+    function togglePasswordVisibility() {
+      const input = document.getElementById('admin-password');
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      document.getElementById('pw-eye').setAttribute('data-lucide', show ? 'eye-off' : 'eye');
+      lucide.createIcons();
+    }
+    function toggleTokenVisibility() {
+      const input = document.getElementById('tg-bot-token');
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      document.getElementById('tok-eye').setAttribute('data-lucide', show ? 'eye-off' : 'eye');
+      lucide.createIcons();
+    }
+
+    // Image zoom in receipt modal
+    function toggleZoom() {
+      const img = document.getElementById('modal-image');
+      const zoomed = img.style.transform === 'scale(1.8)';
+      img.style.transform = zoomed ? '' : 'scale(1.8)';
+      img.classList.toggle('cursor-zoom-in', zoomed);
+      img.classList.toggle('cursor-zoom-out', !zoomed);
+    }
+
+    // Announcement templates + counter
+    const ANN_TEMPLATES = {
+      exam: { title: 'Exam Schedule & Rooms Released', tag: 'Exam', content: 'The exam schedule and room assignments are now available. Please arrive 30 minutes early and bring your student ID.\n\nወደ ፈተና ቦታ ከ30 ደቂቃ በፊት ይድረሱ፤ የተማሪ መታወቂያዎን አይርሱ።', priority: true },
+      registration: { title: 'Registration Is Now Open', tag: 'Registrar', content: 'Course registration is open. Please complete your registration before the deadline to avoid late fees.', priority: false },
+      holiday: { title: 'Campus Closed for the Holiday', tag: "Dean's Office", content: 'The campus will be closed for the upcoming holiday. Classes resume on the next working day. Happy holiday to all students!', priority: false },
+      maintenance: { title: 'Scheduled App Maintenance', tag: 'Tech Team', content: 'JU FreshHub will undergo short maintenance tonight. Some features may be briefly unavailable. Thank you for your patience.', priority: false },
+    };
+    function applyTemplate(key) {
+      const t = ANN_TEMPLATES[key]; if (!t) return;
+      document.getElementById('ann-title').value = t.title;
+      document.getElementById('ann-tag').value = t.tag;
+      document.getElementById('ann-content').value = t.content;
+      document.getElementById('ann-priority').checked = t.priority;
+      updateAnnCount();
+      toast('Template applied — edit and publish.', 'info', 1800);
+    }
+    function updateAnnCount() {
+      const n = document.getElementById('ann-content').value.length;
+      document.getElementById('ann-count').innerText = `${n} chars`;
+    }
+
+    // CSV export
+    function csvCell(v) {
+      const s = String(v == null ? '' : v).replace(/"/g, '""');
+      return `"${s}"`;
+    }
+    function downloadCSV(filename, rows) {
+      const csv = '\uFEFF' + rows.map(r => r.map(csvCell).join(',')).join('\r\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+    function stamp() { return new Date().toISOString().slice(0, 10); }
+    function exportPaymentsCSV() {
+      if (!rawPayments.length) return toast('No payments to export yet.', 'error');
+      const rows = [['Student', 'Email', 'Method', 'Account', 'TxRef', 'Amount (ETB)', 'Status', 'Submitted']];
+      rawPayments.forEach(p => rows.push([
+        p.userName, p.userEmail, p.paymentMethod, p.accountPaidTo, p.transactionReference,
+        p.amountEtb || 199, p.status, getTimestampMs(p.createdAt) ? new Date(getTimestampMs(p.createdAt)).toLocaleString() : ''
+      ]));
+      downloadCSV(`ju-freshhub-payments-${stamp()}.csv`, rows);
+      toast(`Exported ${rawPayments.length} payments.`, 'success');
+    }
+    function exportStudentsCSV() {
+      if (!rawUsers.length) return toast('No students to export yet.', 'error');
+      const rows = [['Name', 'Email', 'Phone', 'Campus', 'Stream', 'Payment Status', 'Pro', 'Joined']];
+      rawUsers.forEach(u => rows.push([
+        u.displayName, u.email, u.phoneNumber, u.campus, u.stream,
+        u.paymentStatus || '', (u.isProUnlocked === true || u.paymentStatus === 'APPROVED') ? 'Yes' : 'No',
+        getTimestampMs(u.createdAt) ? new Date(getTimestampMs(u.createdAt)).toLocaleString() : ''
+      ]));
+      downloadCSV(`ju-freshhub-students-${stamp()}.csv`, rows);
+      toast(`Exported ${rawUsers.length} students.`, 'success');
+    }
+
+    // Sync indicator, greeting, clock
+    function markSynced() {
+      const el = document.getElementById('sync-status');
+      if (el) el.innerText = 'Live · synced ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    function updateGreeting() {
+      const h = new Date().getHours();
+      const g = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+      document.getElementById('greeting').innerText = `${g}, Wonde!👋`;
+      document.getElementById('live-clock').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) +
+        ' · ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // Shortcuts modal
+    function openShortcuts() { document.getElementById('shortcuts-modal').classList.remove('hidden'); lucide.createIcons(); }
+    function closeShortcuts() { document.getElementById('shortcuts-modal').classList.add('hidden'); }
+
+
+    // ─────────────────────────────────────────────────────────────
+    // 🖼 BRANDING IMAGES (logo, login photo, dashboard banner)
+    // Paste permanent image links here (or upload from Alerts & Bot tab).
+    // ─────────────────────────────────────────────────────────────
+    const JU_BRANDING = {
+      logo: 'Generated Image October 30, 2026 - 10_10PM.png',        // image file kept in the SAME folder as this HTML file; or e.g. 'https://yourdomain.com/ju-logo.png'
+      loginPhoto: '',  // e.g. 'https://yourdomain.com/campus-login.jpg'
+      dashPhoto: ''    // e.g. 'https://yourdomain.com/campus-banner.jpg'
+    };
+
+    function safeSrc(u) { return (u.startsWith('data:') || u.includes('%')) ? u : encodeURI(u); }
+
+    function getBrand(key) {
+      try { return localStorage.getItem('ju_brand_' + key) || JU_BRANDING[key] || ''; } catch (e) { return JU_BRANDING[key] || ''; }
+    }
+
+    function applyBranding() {
+      const logo = getBrand('logo');
+      document.querySelectorAll('.ju-logo-box').forEach(box => {
+        const img = box.querySelector('.ju-logo-img');
+        const txt = box.querySelector('.ju-logo-text');
+        if (logo) {
+          img.onerror = () => { img.classList.add('hidden'); txt.classList.remove('hidden'); box.style.background = ''; };
+          img.src = safeSrc(logo); img.classList.remove('hidden'); txt.classList.add('hidden'); box.style.background = '#fff';
+        } else {
+          img.classList.add('hidden'); txt.classList.remove('hidden'); box.style.background = '';
+        }
+      });
+
+      const lp = getBrand('loginPhoto');
+      const hero = document.getElementById('login-hero');
+      const bg = document.getElementById('login-bg');
+      if (lp) {
+        document.getElementById('login-hero-img').src = safeSrc(lp); hero.classList.remove('hidden');
+        bg.src = safeSrc(lp); bg.classList.remove('hidden');
+      } else { hero.classList.add('hidden'); bg.classList.add('hidden'); }
+
+      const dp = getBrand('dashPhoto');
+      const dash = document.getElementById('dash-hero');
+      if (dp) { document.getElementById('dash-hero-img').src = safeSrc(dp); dash.classList.remove('hidden'); }
+      else dash.classList.add('hidden');
+
+      [['logo', 'prev-logo'], ['loginPhoto', 'prev-loginPhoto'], ['dashPhoto', 'prev-dashPhoto']].forEach(([key, id]) => {
+        const v = getBrand(key);
+        const img = document.getElementById(id), empty = document.getElementById(id + '-empty');
+        if (!img) return;
+        if (v) { img.src = safeSrc(v); img.classList.remove('hidden'); empty.classList.add('hidden'); }
+        else { img.classList.add('hidden'); empty.classList.remove('hidden'); }
+      });
+    }
+
+    function handleBrandUpload(key, input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const im = new Image();
+        im.onload = () => {
+          const max = key === 'logo' ? 320 : 1400;
+          const scale = Math.min(1, max / Math.max(im.width, im.height));
+          const c = document.createElement('canvas');
+          c.width = Math.round(im.width * scale); c.height = Math.round(im.height * scale);
+          c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+          const data = key === 'logo' ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', 0.82);
+          try {
+            localStorage.setItem('ju_brand_' + key, data);
+            applyBranding();
+            toast('Image saved!', 'success', 2000);
+          } catch (e) {
+            toast('Image is too large to save in this browser. Try a smaller one or use a link in JU_BRANDING.', 'error', 6000);
+          }
+        };
+        im.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+      input.value = '';
+    }
+
+    function resetBrand(key) {
+      try { localStorage.removeItem('ju_brand_' + key); } catch (e) {}
+      applyBranding();
+      toast('Image removed.', 'info', 1800);
+    }
+
+    function initUI() {
+      applyBranding();
+      syncThemeIcon();
+      syncMuteIcon();
+      updateGreeting();
+      setInterval(updateGreeting, 30000);
+      // Refresh "x min ago" labels once a minute
+      setInterval(() => { if (rawPayments.length) renderPayments(); if (rawUsers.length) renderStudents(); }, 60000);
+      let last = 'payments';
+      try { last = localStorage.getItem('ju_last_tab') || 'payments'; } catch (e) {}
+      if (!['payments', 'students', 'announcements', 'notifications'].includes(last)) last = 'payments';
+      switchTab(last);
+      renderPaymentChips({}, 'PENDING_VERIFICATION');
+      lucide.createIcons();
+
+      // Keyboard shortcuts
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') { closeScreenshotModal(); closeShortcuts(); return; }
+        const tag = (e.target.tagName || '').toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.ctrlKey || e.metaKey || e.altKey) return;
+        if (document.getElementById('app-container').classList.contains('hidden')) return;
+        const map = { '1': 'payments', '2': 'students', '3': 'announcements', '4': 'notifications' };
+        if (map[e.key]) { switchTab(map[e.key]); }
+        else if (e.key === '/') {
+          e.preventDefault();
+          const visible = !document.getElementById('view-payments').classList.contains('hidden') ? 'payment-search'
+                        : !document.getElementById('view-students').classList.contains('hidden') ? 'student-search' : null;
+          if (visible) document.getElementById(visible).focus();
+        }
+        else if (e.key === 'd' || e.key === 'D') toggleTheme();
+        else if (e.key === 'm' || e.key === 'M') toggleMute();
+        else if (e.key === '?') openShortcuts();
+      });
     }
   </script>
 </body>
