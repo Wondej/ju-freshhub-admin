@@ -74,6 +74,16 @@
       .th { @apply py-3.5 px-4 text-[11px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400; }
       .kbd { @apply inline-flex items-center justify-center min-w-[1.5rem] px-1.5 py-0.5 rounded-md text-[11px] font-mono font-semibold bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300; }
       .copyable { @apply cursor-pointer hover:text-brand-600 dark:hover:text-brand-400 transition; }
+    /* Netlify Badge & Feedback Drawer ሙሉ ለሙሉ ይደብቃል */
+div[data-netlify-deploy-id],
+.netlify-badge,
+iframe[src*="netlify"],
+div[class*="netlify"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
     }
   </style>
 
