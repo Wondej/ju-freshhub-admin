@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JU FreshHub — Admin & Notification Portal</title>
+  <link rel="icon" href="https://img.icons8.com/color/48/graduation-cap.png" type="image/png" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              navy: '#1E3A8A',
+              navyDark: '#0F172A',
+              gold: '#F2B134',
+              teal: '#0F766E',
+              green: '#16A34A',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Firebase v10 Compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .badge-pending { background-color: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
+    .badge-approved { background-color: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; }
+    .badge-rejected { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+  <!-- ደወል ድምፅ (Notification Chime) -->
+  <audio id="notif-sound" preload="auto">
+    <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- ======================== LOGIN / AUTH OVERLAY ======================== -->
+  <div id="auth-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 border border-slate-100">
+      <div class="flex items-center space-x-3 mb-6">
+        <div class="w-12 h-12 rounded-xl bg-brand-navy flex items-center justify-center text-white font-black text-xl shadow-lg shadow-brand-navy/30">
+          JU
+        </div>
+        <div>
+          <h2 class="text-xl font-bold text-slate-900">JU FreshHub Admin</h2>
+          <p class="text-xs text-slate-500">Authorized: <span class="font-bold text-brand-navy">By Wondmagegn Yohannes</span></p>
+        </div>
+      </div>
+
+      <div id="auth-error" class="hidden mb-4 p-3 rounded-lg bg-red-50 text-red-700 text-xs font-semibold leading-relaxed border border-red-200"></div>
+
+      <form id="login-form" onsubmit="handleAdminLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Admin Email</label>
+          <input type="email" id="admin-email" required value="ninjaabi213@gmail.com"
+                 class="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-brand-navy outline-none transition" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Password</label>
+          <input type="password" id="admin-password" required placeholder="Enter password"
+                 class="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-brand-navy outline-none transition" />
+        </div>
+        <button type="submit" id="login-btn"
+                class="w-full py-3 bg-brand-navy hover:bg-slate-900 text-white font-bold rounded-lg text-sm shadow-md transition flex items-center justify-center space-x-2">
+          <span>Sign In to Dashboard</span>
+        </button>
+
+        <div class="relative flex py-2 items-center">
+          <div class="flex-grow border-t border-slate-200"></div>
+          <span class="flex-shrink mx-2 text-[10px] text-slate-400 uppercase font-bold tracking-wider">Alpha Tech Ⓒ All Right reserved 2026</span>
+          <div class="flex-grow border-t border-slate-200"></div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================== MAIN DASHBOARD ======================== -->
+  <div id="app-container" class="hidden min-h-screen flex flex-col">
+    <!-- Navbar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-brand-navy text-brand-gold flex items-center justify-center font-black text-lg shadow-md">
+            JU
+          </div>
+          <div>
+            <h1 class="text-base font-extrabold text-slate-900 leading-tight">JU FreshHub Portal</h1>
+            <p class="text-xs font-medium text-slate-500">Real-time Student & Payment Monitor</p>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="hidden md:flex space-x-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+          <button onclick="switchTab('payments')" id="tab-btn-payments" class="tab-btn active px-4 py-2 rounded-lg bg-white shadow-sm text-brand-navy font-bold">
+            Payments & Receipts
+          </button>
+          <button onclick="switchTab('students')" id="tab-btn-students" class="tab-btn px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900">
+            Student Profiles
+          </button>
+          <button onclick="switchTab('announcements')" id="tab-btn-announcements" class="tab-btn px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900">
+            Announcements
+          </button>
+          <button onclick="switchTab('notifications')" id="tab-btn-notifications" class="tab-btn px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900 flex items-center space-x-1">
+            <i data-lucide="bell" class="w-3.5 h-3.5"></i>
+            <span>Alerts & Bot</span>
+          </button>
+        </nav>
+
+        <div class="flex items-center space-x-2">
+          <!-- Notification Status Badge -->
+          <button onclick="requestNotificationPermission()" id="push-perm-btn" class="px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-bold hover:bg-slate-100 flex items-center space-x-1 text-slate-700">
+            <i data-lucide="bell-ring" class="w-4 h-4 text-brand-navy"></i>
+            <span class="hidden sm:inline">Enable Phone Alerts</span>
+          </button>
+
+          <button onclick="handleSignOut()" title="Sign Out" class="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition">
+            <i data-lucide="log-out" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Subnav -->
+      <div class="flex md:hidden border-t border-slate-200 px-2 py-2 bg-slate-50 justify-around text-xs font-semibold">
+        <button onclick="switchTab('payments')" class="mobile-tab-btn text-brand-navy font-bold" id="mob-tab-payments">Payments</button>
+        <button onclick="switchTab('students')" class="mobile-tab-btn text-slate-500" id="mob-tab-students">Students</button>
+        <button onclick="switchTab('announcements')" class="mobile-tab-btn text-slate-500" id="mob-tab-announcements">Notices</button>
+        <button onclick="switchTab('notifications')" class="mobile-tab-btn text-slate-500" id="mob-tab-notifications">Alerts</button>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      
+      <!-- Metrics Bar -->
+      <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Students</p>
+            <p id="metric-total-students" class="text-2xl font-black text-slate-900 mt-1">0</p>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <i data-lucide="users" class="w-5 h-5"></i>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Pro Unlocked</p>
+            <p id="metric-pro-users" class="text-2xl font-black text-emerald-600 mt-1">0</p>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <i data-lucide="shield-check" class="w-5 h-5"></i>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Pending Review</p>
+            <p id="metric-pending-payments" class="text-2xl font-black text-amber-600 mt-1">0</p>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+            <i data-lucide="clock" class="w-5 h-5"></i>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Revenue</p>
+            <p id="metric-total-revenue" class="text-2xl font-black text-slate-900 mt-1">0 ETB</p>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+            <i data-lucide="wallet" class="w-5 h-5"></i>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================== TAB 1: PAYMENTS & RECEIPTS ======================== -->
+      <section id="view-payments" class="space-y-4">
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+          <div class="relative flex-1">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
+            <input type="text" id="payment-search" oninput="renderPayments()" placeholder="Search by student name, phone, email, or TxRef..."
+                   class="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:ring-2 focus:ring-brand-navy outline-none" />
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <span class="text-xs font-bold text-slate-500">Status:</span>
+            <select id="payment-filter" onchange="renderPayments()"
+                    class="px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-white outline-none focus:ring-2 focus:ring-brand-navy">
+              <option value="ALL">All Receipts</option>
+              <option value="PENDING_VERIFICATION" selected>Pending Review</option>
+              <option value="APPROVED">Approved</option>
+              <option value="REJECTED">Rejected</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold tracking-wider border-b border-slate-200">
+                <tr>
+                  <th class="py-3.5 px-4">Student</th>
+                  <th class="py-3.5 px-4">Method & Account</th>
+                  <th class="py-3.5 px-4">Tx Reference</th>
+                  <th class="py-3.5 px-4">Amount</th>
+                  <th class="py-3.5 px-4">Screenshot</th>
+                  <th class="py-3.5 px-4">Status</th>
+                  <th class="py-3.5 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="payments-tbody" class="divide-y divide-slate-100">
+                <tr>
+                  <td colspan="7" class="text-center py-12 text-slate-400">Listening for payments in real-time...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================== TAB 2: STUDENT DIRECTORY ======================== -->
+      <section id="view-students" class="hidden space-y-4">
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+          <div class="relative flex-1">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
+            <input type="text" id="student-search" oninput="renderStudents()" placeholder="Search students by name, email, or phone..."
+                   class="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:ring-2 focus:ring-brand-navy outline-none" />
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <span class="text-xs font-bold text-slate-500">Stream:</span>
+            <select id="student-stream-filter" onchange="renderStudents()"
+                    class="px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-white outline-none focus:ring-2 focus:ring-brand-navy">
+              <option value="ALL">All Streams</option>
+              <option value="Natural Science">Natural Science</option>
+              <option value="Social Science">Social Science</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold tracking-wider border-b border-slate-200">
+                <tr>
+                  <th class="py-3.5 px-4">Name & Email</th>
+                  <th class="py-3.5 px-4">Phone Number</th>
+                  <th class="py-3.5 px-4">Campus & Stream</th>
+                  <th class="py-3.5 px-4">Payment State</th>
+                  <th class="py-3.5 px-4">Pro Access</th>
+                  <th class="py-3.5 px-4 text-right">Quick Toggle</th>
+                </tr>
+              </thead>
+              <tbody id="students-tbody" class="divide-y divide-slate-100">
+                <tr>
+                  <td colspan="6" class="text-center py-12 text-slate-400">Loading student directory...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================== TAB 3: ANNOUNCEMENTS ======================== -->
+      <section id="view-announcements" class="hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+              <i data-lucide="megaphone" class="w-4 h-4 text-brand-navy"></i>
+              <span>Broadcast Announcement</span>
+            </h3>
+            <p class="text-xs text-slate-500">Notices published here appear immediately in all students' mobile apps.</p>
+
+            <form onsubmit="handlePostAnnouncement(event)" class="space-y-4 text-xs font-semibold">
+              <div>
+                <label class="block text-slate-700 uppercase mb-1">Title</label>
+                <input type="text" id="ann-title" required placeholder="e.g. Midterm Exam Rooms Released"
+                       class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-navy outline-none" />
+              </div>
+
+              <div>
+                <label class="block text-slate-700 uppercase mb-1">Tag / Issuer</label>
+                <input type="text" id="ann-tag" required placeholder="e.g. Dean's Office, Academic, Exam" value="Dean's Office"
+                       class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-navy outline-none" />
+              </div>
+
+              <div>
+                <label class="block text-slate-700 uppercase mb-1">Content</label>
+                <textarea id="ann-content" required rows="4" placeholder="Detailed announcement content..."
+                          class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-navy outline-none"></textarea>
+              </div>
+
+              <div class="flex items-center space-x-2">
+                <input type="checkbox" id="ann-priority" class="rounded text-brand-navy focus:ring-brand-navy w-4 h-4" />
+                <label for="ann-priority" class="text-slate-700 font-bold">Mark as Urgent / Priority</label>
+              </div>
+
+              <button type="submit" id="ann-submit-btn"
+                      class="w-full py-2.5 bg-brand-navy hover:bg-slate-900 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center space-x-1.5">
+                <i data-lucide="send" class="w-4 h-4"></i>
+                <span>Publish to App</span>
+              </button>
+            </form>
+          </div>
+
+          <div class="lg:col-span-2 space-y-3">
+            <h3 class="text-base font-bold text-slate-900 flex items-center justify-between">
+              <span>Active Announcements</span>
+              <span id="announcements-count" class="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full font-bold">0</span>
+            </h3>
+
+            <div id="announcements-list" class="space-y-3"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================== TAB 4: ALERTS & TELEGRAM BOT ======================== -->
+      <section id="view-notifications" class="hidden space-y-6">
+        <div class="max-w-2xl bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+          <div class="flex items-center space-x-3">
+            <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold">
+              <i data-lucide="send" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900">Telegram Instant Phone Notifications</h3>
+              <p class="text-xs text-slate-500">ተማሪ ሲመዘገብ ወይም ክፍያ ሲልክ ስልክህ ላይ በቴሌግራም ሜሴጅ ድምጽ አሰምቶ እንዲደርስህ አድርግ</p>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2 text-slate-600 leading-relaxed">
+            <p class="font-bold text-slate-800">እንዴት ማዋቀር ትችላለህ (1 ደቂቃ)?</p>
+            <ol class="list-decimal pl-4 space-y-1">
+              <li>ቴሌግራም ላይ <b>@BotFather</b> ጋር ሂድና <code class="bg-white px-1.5 py-0.5 rounded border">/newbot</code> ብለህ Bot ፍጠር፤ የተሰጠህን <b>Bot Token</b> ከታች አስገባ።</li>
+              <li>ከዚያ <b>@userinfobot</b> ጋር ሄደህ <code class="bg-white px-1.5 py-0.5 rounded border">/start</code> ስትለው የሚሰጥህን ያንተን <b>Id (Chat ID)</b> አስገባ።</li>
+              <li>የፈጠርከውን ቦት ቴሌግራም ላይ ፈልገህ <code class="bg-white px-1.5 py-0.5 rounded border">/start</code> በለው (መልዕክት እንዲልክልህ ይፈቀድለታል)።</li>
+            </ol>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Telegram Bot Token</label>
+              <input type="text" id="tg-bot-token" placeholder="9082714639:AAGscH5FdluEPIntyAXvp2GB_bO5L7sTTg0"
+                     class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:ring-2 focus:ring-brand-navy outline-none" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Your Telegram Chat ID</label>
+              <input type="text" id="tg-chat-id" placeholder="e.g. 123456789"
+                     class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:ring-2 focus:ring-brand-navy outline-none" />
+            </div>
+
+            <div class="flex gap-2 pt-2">
+              <button onclick="saveTelegramSettings()" class="flex-1 py-2.5 bg-brand-navy hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition">
+                Save Telegram Settings
+              </button>
+              <button onclick="testTelegramNotification()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
+                Test Alert Now
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ======================== SCREENSHOT MODAL ======================== -->
+  <div id="screenshot-modal" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div>
+          <h3 id="modal-title" class="text-sm font-bold text-slate-900">Payment Screenshot</h3>
+          <p id="modal-subtitle" class="text-xs text-slate-500 font-mono"></p>
+        </div>
+        <button onclick="closeScreenshotModal()" class="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-auto p-4 flex items-center justify-center bg-slate-950">
+        <img id="modal-image" src="" alt="Payment Receipt" class="max-w-full max-h-[65vh] object-contain rounded-lg" />
+        <div id="modal-no-image" class="hidden text-slate-400 text-sm">No screenshot available for this submission.</div>
+      </div>
+
+      <div class="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
+        <a id="modal-open-tab" href="#" target="_blank" class="text-xs text-brand-navy hover:underline font-bold flex items-center space-x-1">
+          <span>Open Full Size in New Tab</span>
+          <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+        </a>
+        <button onclick="closeScreenshotModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg text-xs">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================== SCRIPT ======================== -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDhb3KHZYGtDzAxd7v7rakyUqwNL4B2YYQ",
+      authDomain: "ju-freshhub.firebaseapp.com",
+      projectId: "ju-freshhub",
+      storageBucket: "ju-freshhub.firebasestorage.app",
+      messagingSenderId: "660385131556",
+      appId: "1:660385131556:web:22a98f637d890564b13cb1"
+    };
+
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let rawPayments = [];
+    let rawUsers = [];
+    let rawAnnouncements = [];
+    let isInitialLoad = true;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+      loadTelegramSettings();
+      setupAuthListener();
+    });
+
+    function setupAuthListener() {
+      auth.onAuthStateChanged((user) => {
+        if (user && user.email && user.email.toLowerCase() === 'ninjaabi213@gmail.com') {
+          document.getElementById('auth-modal').classList.add('hidden');
+          document.getElementById('app-container').classList.remove('hidden');
+          document.getElementById('admin-user-display').innerText = user.email;
+          startFirestoreListeners();
+        } else if (user) {
+          document.getElementById('auth-modal').classList.remove('hidden');
+          document.getElementById('app-container').classList.add('hidden');
+          showAuthError(`Signed in as ${user.email}, but your rules only grant admin access to ninjaabi213@gmail.com.`);
+        } else {
+          document.getElementById('auth-modal').classList.remove('hidden');
+          document.getElementById('app-container').classList.add('hidden');
+        }
+      });
+    }
+
+    function showAuthError(msg) {
+      const errorDiv = document.getElementById('auth-error');
+      errorDiv.innerText = msg;
+      errorDiv.classList.remove('hidden');
+    }
+
+    async function handleAdminLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('admin-email').value.trim();
+      const password = document.getElementById('admin-password').value;
+      const errorDiv = document.getElementById('auth-error');
+      const btn = document.getElementById('login-btn');
+
+      errorDiv.classList.add('hidden');
+      btn.disabled = true;
+      btn.innerText = "Signing in...";
+
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+      } catch (err) {
+        showAuthError(err.message || "Failed to sign in.");
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Sign In to Dashboard";
+      }
+    }
+
+    async function handleAdminRegister() {
+      const email = document.getElementById('admin-email').value.trim();
+      const password = document.getElementById('admin-password').value;
+
+      if (!password || password.length < 6) {
+        showAuthError("Please enter a password of at least 6 characters in the Password field first.");
+        return;
+      }
+
+      try {
+        await auth.createUserWithEmailAndPassword(email, password);
+        alert("Admin account created successfully!");
+      } catch (err) {
+        showAuthError(err.message);
+      }
+    }
+
+    function handleSignOut() {
+      if (confirm("Sign out of the admin panel?")) {
+        auth.signOut();
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 🔔 NOTIFICATIONS SYSTEM (Audio + Browser Push + Telegram)
+    // ─────────────────────────────────────────────────────────────
+    function triggerPhoneAlert(title, message, isPayment = false) {
+      // 1. የድምፅ ደወል (Audio Alert)
+      const sound = document.getElementById('notif-sound');
+      if (sound) {
+        sound.play().catch(() => {});
+      }
+
+      // 2. Browser Push Notification
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(title, {
+          body: message,
+          icon: "https://img.icons8.com/color/96/graduation-cap.png"
+        });
+      }
+
+      // 3. Telegram Instant Alert
+      sendTelegramMessage(`🔔 *${title}*\n\n${message}`);
+    }
+
+    function requestNotificationPermission() {
+      if (!("Notification" in window)) {
+        alert("This browser does not support desktop notifications.");
+        return;
+      }
+      Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+          alert("Phone notifications are active! You will get alerts when students register or pay.");
+          new Notification("JU FreshHub Alerts Active", { body: "You will receive live alerts for registrations and payments." });
+        }
+      });
+    }
+
+    function loadTelegramSettings() {
+      const token = localStorage.getItem('ju_tg_bot_token') || '';
+      const chatId = localStorage.getItem('ju_tg_chat_id') || '';
+      document.getElementById('tg-bot-token').value = token;
+      document.getElementById('tg-chat-id').value = chatId;
+    }
+
+    function saveTelegramSettings() {
+      const token = document.getElementById('tg-bot-token').value.trim();
+      const chatId = document.getElementById('tg-chat-id').value.trim();
+      localStorage.setItem('ju_tg_bot_token', token);
+      localStorage.setItem('ju_tg_chat_id', chatId);
+      alert("Telegram notification settings saved!");
+    }
+
+    async function sendTelegramMessage(text) {
+      const token = "9082714639:AAGscH5FdluEPIntyAXvp2GB_bO5L7sTTg0";
+      const chatId = "5927660855";
+      if (!token || !chatId) return;
+
+      try {
+        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: text,
+            parse_mode: 'Markdown'
+          })
+        });
+      } catch (e) {
+        console.error("Telegram notification failed:", e);
+      }
+    }
+
+    function testTelegramNotification() {
+      const token = document.getElementById('tg-bot-token').value.trim();
+      const chatId = document.getElementById('tg-chat-id').value.trim();
+      if (!token || !chatId) {
+        alert("Please enter both Bot Token and Chat ID first.");
+        return;
+      }
+      sendTelegramMessage("🎓 *JU FreshHub Test Alert*\n\nይህ የሙከራ መልዕክት ነው! ተማሪ ሲመዘገብ ወይም ክፍያ ሲልክ በዚህ መልኩ ስልክህ ላይ ማስታወቂያ ይደርስሃል።")
+        .then(() => alert("Test alert sent to your Telegram! Check your phone."))
+        .catch(err => alert("Failed to send: " + err));
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 📡 REAL-TIME FIRESTORE MONITORING
+    // ─────────────────────────────────────────────────────────────
+    function startFirestoreListeners() {
+      // 1. Payment Submissions Listener
+      db.collection('payment_submissions')
+        .orderBy('createdAt', 'desc')
+        .onSnapshot((snapshot) => {
+          // Check for newly added payment receipts after initial load
+          if (!isInitialLoad) {
+            snapshot.docChanges().forEach((change) => {
+              if (change.type === "added") {
+                const data = change.doc.data();
+                triggerPhoneAlert(
+                  "💰 አዲስ የክፍያ ደረሰኝ ደርሷል!",
+                  `ተማሪ: ${data.userName || 'Student'}\nክፍያ: ${data.amountEtb || 199} ETB (${data.paymentMethod || 'Telebirr'})\nTxRef: ${data.transactionReference || 'N/A'}`
+                );
+              }
+            });
+          }
+
+          rawPayments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          updateMetrics();
+          renderPayments();
+        }, (err) => console.error("Payment listener error:", err));
+
+      // 2. Users (Student Registrations) Listener
+      db.collection('users')
+        .onSnapshot((snapshot) => {
+          // Check for newly registered students
+          if (!isInitialLoad) {
+            snapshot.docChanges().forEach((change) => {
+              if (change.type === "added") {
+                const user = change.doc.data();
+                triggerPhoneAlert(
+                  "🎓 አዲስ ተማሪ ተመዘገበ!",
+                  `ስም: ${user.displayName || 'JU Freshman'}\nስልክ: ${user.phoneNumber || 'Not given'}\nስትሪም: ${user.stream || 'Natural Science'}\nካምፓስ: ${user.campus || 'Main Campus'}`
+                );
+              }
+            });
+          }
+
+          rawUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          updateMetrics();
+          renderStudents();
+          isInitialLoad = false;
+        }, (err) => console.error("Users listener error:", err));
+
+      // 3. Announcements
+      db.collection('announcements')
+        .orderBy('createdAt', 'desc')
+        .onSnapshot((snapshot) => {
+          rawAnnouncements = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          renderAnnouncements();
+        }, (err) => console.error("Announcements listener error:", err));
+    }
+
+    function updateMetrics() {
+      const totalStudents = rawUsers.length;
+      const proUsers = rawUsers.filter(u => u.isProUnlocked === true || u.paymentStatus === 'APPROVED').length;
+      const pendingReviews = rawPayments.filter(p => p.status === 'PENDING_VERIFICATION').length;
+      const totalRevenue = proUsers * 199;
+
+      document.getElementById('metric-total-students').innerText = totalStudents;
+      document.getElementById('metric-pro-users').innerText = proUsers;
+      document.getElementById('metric-pending-payments').innerText = pendingReviews;
+      document.getElementById('metric-total-revenue').innerText = `${totalRevenue.toLocaleString()} ETB`;
+    }
+
+    function renderPayments() {
+      const tbody = document.getElementById('payments-tbody');
+      const search = document.getElementById('payment-search').value.toLowerCase().trim();
+      const filter = document.getElementById('payment-filter').value;
+
+      const filtered = rawPayments.filter(item => {
+        const matchesStatus = filter === 'ALL' || item.status === filter;
+        const matchesSearch = !search ||
+          (item.userName && item.userName.toLowerCase().includes(search)) ||
+          (item.userEmail && item.userEmail.toLowerCase().includes(search)) ||
+          (item.transactionReference && item.transactionReference.toLowerCase().includes(search)) ||
+          (item.accountPaidTo && item.accountPaidTo.toLowerCase().includes(search));
+        return matchesStatus && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-slate-400">No payment receipts found matching criteria.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(p => {
+        const statusBadge = getStatusBadge(p.status);
+        const hasImage = p.screenshotUrl || (p.screenshotBase64 && p.screenshotBase64.length > 50);
+
+        return `
+          <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+            <td class="py-3 px-4">
+              <div class="font-bold text-slate-900">${escapeHtml(p.userName || 'Student')}</div>
+              <div class="text-xs text-slate-500 font-mono">${escapeHtml(p.userEmail || '')}</div>
+            </td>
+            <td class="py-3 px-4">
+              <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-700 mb-0.5">
+                ${escapeHtml(p.paymentMethod || 'Transfer')}
+              </span>
+              <div class="text-xs text-slate-500 font-mono">${escapeHtml(p.accountPaidTo || 'Account')}</div>
+            </td>
+            <td class="py-3 px-4">
+              <span class="font-mono text-xs font-bold text-brand-navy bg-blue-50 px-2 py-1 rounded">
+                ${escapeHtml(p.transactionReference || 'N/A')}
+              </span>
+            </td>
+            <td class="py-3 px-4 font-black text-slate-800">${p.amountEtb || 199} ETB</td>
+            <td class="py-3 px-4">
+              ${hasImage ? `
+                <button onclick="viewReceipt('${p.id}')"
+                        class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center space-x-1 transition">
+                  <i data-lucide="image" class="w-3.5 h-3.5"></i>
+                  <span>View Proof</span>
+                </button>
+              ` : `<span class="text-xs text-slate-400 italic">No image</span>`}
+            </td>
+            <td class="py-3 px-4">${statusBadge}</td>
+            <td class="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
+              ${p.status !== 'APPROVED' ? `
+                <button onclick="approvePayment('${p.id}', '${p.userId}')"
+                        class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm transition inline-flex items-center space-x-1">
+                  <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                  <span>Approve</span>
+                </button>
+              ` : `
+                <button onclick="revokePayment('${p.id}', '${p.userId}')"
+                        class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-medium transition">
+                  Revoke
+                </button>
+              `}
+              ${p.status !== 'REJECTED' && p.status !== 'APPROVED' ? `
+                <button onclick="rejectPayment('${p.id}')"
+                        class="px-2 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-xs font-bold transition inline-flex items-center">
+                  <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                </button>
+              ` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function renderStudents() {
+      const tbody = document.getElementById('students-tbody');
+      const search = document.getElementById('student-search').value.toLowerCase().trim();
+      const streamFilter = document.getElementById('student-stream-filter').value;
+
+      const filtered = rawUsers.filter(u => {
+        const matchesStream = streamFilter === 'ALL' || u.stream === streamFilter;
+        const matchesSearch = !search ||
+          (u.displayName && u.displayName.toLowerCase().includes(search)) ||
+          (u.email && u.email.toLowerCase().includes(search)) ||
+          (u.phoneNumber && u.phoneNumber.includes(search));
+        return matchesStream && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-slate-400">No students found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(u => {
+        const isPro = u.isProUnlocked === true || u.paymentStatus === 'APPROVED';
+        return `
+          <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+            <td class="py-3 px-4">
+              <div class="font-bold text-slate-900">${escapeHtml(u.displayName || 'JU Student')}</div>
+              <div class="text-xs text-slate-500">${escapeHtml(u.email || '')}</div>
+            </td>
+            <td class="py-3 px-4 font-mono text-xs font-semibold text-slate-700">
+              ${escapeHtml(u.phoneNumber || 'Not provided')}
+            </td>
+            <td class="py-3 px-4">
+              <div class="text-xs font-semibold text-slate-800">${escapeHtml(u.campus || 'Main Campus')}</div>
+              <div class="text-[11px] text-slate-500">${escapeHtml(u.stream || 'Natural Science')}</div>
+            </td>
+            <td class="py-3 px-4">${getStatusBadge(u.paymentStatus || (isPro ? 'APPROVED' : 'UNPAID'))}</td>
+            <td class="py-3 px-4">
+              <span class="inline-flex items-center text-xs font-bold ${isPro ? 'text-emerald-600' : 'text-slate-400'}">
+                <span class="w-2 h-2 rounded-full ${isPro ? 'bg-emerald-500' : 'bg-slate-300'} mr-1.5"></span>
+                ${isPro ? 'Active Pro' : 'Free / Locked'}
+              </span>
+            </td>
+            <td class="py-3 px-4 text-right">
+              <button onclick="toggleUserPro('${u.id}', ${!isPro})"
+                      class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${isPro ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' : 'bg-brand-navy text-white hover:bg-slate-900'}">
+                ${isPro ? 'Revoke Pro' : 'Grant Pro'}
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function renderAnnouncements() {
+      const container = document.getElementById('announcements-list');
+      document.getElementById('announcements-count').innerText = rawAnnouncements.length;
+
+      if (rawAnnouncements.length === 0) {
+        container.innerHTML = `<div class="bg-white p-8 rounded-2xl border text-center text-slate-400 text-sm">No announcements posted yet.</div>`;
+        return;
+      }
+
+      container.innerHTML = rawAnnouncements.map(a => `
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-brand-navy border border-blue-200">
+                ${escapeHtml(a.tag || 'Notice')}
+              </span>
+              ${a.priority ? `<span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-red-100 text-red-700">URGENT</span>` : ''}
+              <span class="text-xs text-slate-400 font-medium">${escapeHtml(a.date || '')}</span>
+            </div>
+            <button onclick="deleteAnnouncement('${a.id}')" title="Delete Announcement" class="text-slate-400 hover:text-red-600 p-1 rounded">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+          <h4 class="font-bold text-slate-900 text-sm sm:text-base">${escapeHtml(a.title)}</h4>
+          <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">${escapeHtml(a.content)}</p>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    async function approvePayment(submissionId, userId) {
+      if (!confirm("Approve this payment receipt and grant permanent Pro Access to the student?")) return;
+
+      try {
+        const batch = db.batch();
+        const paymentRef = db.collection('payment_submissions').doc(submissionId);
+        batch.update(paymentRef, {
+          status: 'APPROVED',
+          reviewedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          reviewedBy: 'ninjaabi213@gmail.com'
+        });
+
+        if (userId) {
+          const userRef = db.collection('users').doc(userId);
+          batch.update(userRef, {
+            isProUnlocked: true,
+            paymentStatus: 'APPROVED',
+            proActivatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+
+        await batch.commit();
+        alert("Payment approved and Pro unlocked for the student!");
+      } catch (err) {
+        console.error("Approval error:", err);
+        alert("Error approving payment: " + err.message);
+      }
+    }
+
+    async function rejectPayment(submissionId) {
+      const reason = prompt("Enter reason for rejection:", "Invalid transaction or unreadable screenshot.");
+      if (reason === null) return;
+
+      try {
+        await db.collection('payment_submissions').doc(submissionId).update({
+          status: 'REJECTED',
+          rejectReason: reason,
+          reviewedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          reviewedBy: 'ninjaabi213@gmail.com'
+        });
+      } catch (err) {
+        alert("Error rejecting payment: " + err.message);
+      }
+    }
+
+    async function revokePayment(submissionId, userId) {
+      if (!confirm("Revoke this approval and lock student Pro access?")) return;
+
+      try {
+        const batch = db.batch();
+        batch.update(db.collection('payment_submissions').doc(submissionId), {
+          status: 'REVOKED',
+          reviewedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          reviewedBy: 'ninjaabi213@gmail.com'
+        });
+        if (userId) {
+          batch.update(db.collection('users').doc(userId), {
+            isProUnlocked: false,
+            paymentStatus: 'REJECTED',
+            proRevokedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+        await batch.commit();
+      } catch (err) {
+        alert("Error revoking access: " + err.message);
+      }
+    }
+
+    async function toggleUserPro(userId, makePro) {
+      const action = makePro ? "grant PRO access to" : "revoke PRO access from";
+      if (!confirm(`Are you sure you want to ${action} this student?`)) return;
+
+      try {
+        const updateData = {
+          isProUnlocked: makePro,
+          paymentStatus: makePro ? 'APPROVED' : 'UNPAID',
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        if (makePro) {
+          updateData.proActivatedAt = firebase.firestore.FieldValue.serverTimestamp();
+        } else {
+          updateData.proRevokedAt = firebase.firestore.FieldValue.serverTimestamp();
+        }
+
+        await db.collection('users').doc(userId).update(updateData);
+      } catch (err) {
+        alert("Error updating user: " + err.message);
+      }
+    }
+
+    async function handlePostAnnouncement(e) {
+      e.preventDefault();
+      const title = document.getElementById('ann-title').value.trim();
+      const tag = document.getElementById('ann-tag').value.trim() || 'Notice';
+      const content = document.getElementById('ann-content').value.trim();
+      const priority = document.getElementById('ann-priority').checked;
+      const btn = document.getElementById('ann-submit-btn');
+
+      btn.disabled = true;
+
+      try {
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+
+        await db.collection('announcements').add({
+          title,
+          tag,
+          content,
+          priority,
+          date: dateStr,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        document.getElementById('ann-title').value = '';
+        document.getElementById('ann-content').value = '';
+        document.getElementById('ann-priority').checked = false;
+        alert("Announcement broadcasted successfully to all JU FreshHub apps!");
+      } catch (err) {
+        alert("Failed to publish: " + err.message);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function deleteAnnouncement(id) {
+      if (!confirm("Delete this announcement?")) return;
+      try {
+        await db.collection('announcements').doc(id).delete();
+      } catch (err) {
+        alert("Failed to delete: " + err.message);
+      }
+    }
+
+    function viewReceipt(submissionId) {
+      const item = rawPayments.find(p => p.id === submissionId);
+      if (!item) return;
+
+      const modal = document.getElementById('screenshot-modal');
+      const img = document.getElementById('modal-image');
+      const noImg = document.getElementById('modal-no-image');
+      const openTab = document.getElementById('modal-open-tab');
+
+      document.getElementById('modal-title').innerText = `${item.userName || 'Student'} — ${item.paymentMethod || 'Transfer'}`;
+      document.getElementById('modal-subtitle').innerText = `TxRef: ${item.transactionReference || 'N/A'}`;
+
+      let src = "";
+      if (item.screenshotUrl && item.screenshotUrl.startsWith("http")) {
+        src = item.screenshotUrl;
+      } else if (item.screenshotBase64 && item.screenshotBase64.length > 50) {
+        src = item.screenshotBase64.startsWith("data:") ? item.screenshotBase64 : `data:image/jpeg;base64,${item.screenshotBase64}`;
+      }
+
+      if (src) {
+        img.src = src;
+        img.classList.remove('hidden');
+        noImg.classList.add('hidden');
+        openTab.href = src;
+        openTab.classList.remove('hidden');
+      } else {
+        img.classList.add('hidden');
+        noImg.classList.remove('hidden');
+        openTab.classList.add('hidden');
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeScreenshotModal() {
+      document.getElementById('screenshot-modal').classList.add('hidden');
+      document.getElementById('modal-image').src = "";
+    }
+
+    function switchTab(tabId) {
+      ['payments', 'students', 'announcements', 'notifications'].forEach(tab => {
+        const view = document.getElementById(`view-${tab}`);
+        const btn = document.getElementById(`tab-btn-${tab}`);
+        const mobBtn = document.getElementById(`mob-tab-${tab}`);
+
+        if (tab === tabId) {
+          view.classList.remove('hidden');
+          if (btn) {
+            btn.classList.add('bg-white', 'shadow-sm', 'text-brand-navy', 'font-bold');
+            btn.classList.remove('text-slate-600');
+          }
+          if (mobBtn) {
+            mobBtn.classList.add('text-brand-navy', 'font-bold');
+            mobBtn.classList.remove('text-slate-500');
+          }
+        } else {
+          view.classList.add('hidden');
+          if (btn) {
+            btn.classList.remove('bg-white', 'shadow-sm', 'text-brand-navy', 'font-bold');
+            btn.classList.add('text-slate-600');
+          }
+          if (mobBtn) {
+            mobBtn.classList.remove('text-brand-navy', 'font-bold');
+            mobBtn.classList.add('text-slate-500');
+          }
+        }
+      });
+    }
+
+    function getStatusBadge(status) {
+      const s = (status || 'UNPAID').toUpperCase();
+      if (s === 'APPROVED' || s === 'PAID') {
+        return `<span class="px-2.5 py-1 rounded-full text-xs font-bold badge-approved">Approved</span>`;
+      } else if (s === 'PENDING_VERIFICATION') {
+        return `<span class="px-2.5 py-1 rounded-full text-xs font-bold badge-pending animate-pulse">Pending Review</span>`;
+      } else if (s === 'REJECTED' || s === 'REVOKED') {
+        return `<span class="px-2.5 py-1 rounded-full text-xs font-bold badge-rejected">Rejected</span>`;
+      } else {
+        return `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-500">Unpaid</span>`;
+      }
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.innerText = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
