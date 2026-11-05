@@ -661,6 +661,67 @@
               </div>
             </div>
 
+            <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-900/50 p-3 sm:p-4 space-y-3">
+              <div class="flex items-start justify-between gap-3 flex-wrap">
+                <div>
+                  <h5 class="text-sm font-display font-bold text-slate-900 dark:text-white flex items-center gap-1.5"><i data-lucide="image" class="w-4 h-4"></i>Live Mock Exam banner</h5>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Optional. Uploaded to the public Supabase bucket <code class="font-mono">exam-banners</code>; the public URL is saved on the exam as <code class="font-mono">bannerUrl</code>.</p>
+                </div>
+                <button type="button" onclick="toggleSbSettings()" class="btn-ghost !py-1 !px-2.5 text-[11px]"><i data-lucide="settings-2" class="w-3.5 h-3.5"></i>Storage settings</button>
+              </div>
+
+              <div id="sb-settings" class="hidden rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50/60 dark:bg-amber-500/5 p-3 space-y-2.5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label class="label" for="sb-url">Supabase project URL</label>
+                    <input type="url" id="sb-url" placeholder="https://xxxxxxxx.supabase.co" class="input text-xs font-mono" autocomplete="off" />
+                  </div>
+                  <div>
+                    <label class="label" for="sb-key">Supabase anon (public) key</label>
+                    <input type="password" id="sb-key" placeholder="eyJ…" class="input text-xs font-mono" autocomplete="off" />
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <button type="button" onclick="saveSbSettings()" class="btn-primary !py-1.5 text-xs">Save</button>
+                  <button type="button" onclick="testSbSettings()" class="btn-ghost !py-1.5 text-xs">Test bucket</button>
+                  <span id="sb-status" class="text-[11px] font-semibold text-slate-500 dark:text-slate-400"></span>
+                </div>
+                <details class="text-[11px] text-slate-600 dark:text-slate-300">
+                  <summary class="cursor-pointer font-bold">One-time Supabase setup (SQL)</summary>
+                  <p class="mt-1.5">Create a <b>public</b> bucket named <code class="font-mono">exam-banners</code> (Storage → New bucket → Public), then run this in the SQL editor so the admin page can upload and remove files:</p>
+                  <pre class="mt-1.5 p-2 rounded-lg bg-slate-900 text-slate-100 overflow-x-auto text-[10.5px] leading-relaxed">create policy "exam-banners upload" on storage.objects
+  for insert to anon, authenticated
+  with check (bucket_id = 'exam-banners');
+
+create policy "exam-banners delete" on storage.objects
+  for delete to anon, authenticated
+  using (bucket_id = 'exam-banners');</pre>
+                  <p class="mt-1.5">Public bucket files are readable by anyone through their URL, so no select policy is needed.</p>
+                </details>
+              </div>
+
+              <div id="banner-drop" ondragover="event.preventDefault(); this.classList.add('ring-2','ring-brand-400')" ondragleave="this.classList.remove('ring-2','ring-brand-400')" ondrop="onBannerDrop(event)"
+                   class="relative rounded-xl overflow-hidden border-2 border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 min-h-[7rem] flex items-center justify-center">
+                <div id="banner-preview" class="w-full"></div>
+              </div>
+
+              <div id="banner-progress" class="hidden space-y-1">
+                <div class="h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden"><div id="banner-bar" class="h-full w-0 bg-brand-600 transition-all"></div></div>
+                <p id="banner-status" class="text-[11px] font-semibold text-slate-500 dark:text-slate-400"></p>
+              </div>
+
+              <input type="file" id="banner-file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden" onchange="onBannerPicked(this)" />
+              <div class="flex flex-wrap gap-2">
+                <button type="button" id="banner-upload-btn" onclick="pickBanner()" class="btn-primary"><i data-lucide="upload" class="w-4 h-4"></i><span id="banner-upload-label">Upload banner</span></button>
+                <button type="button" id="banner-remove-btn" onclick="removeBanner()" class="btn-danger hidden"><i data-lucide="trash-2" class="w-4 h-4"></i>Remove</button>
+              </div>
+
+              <div id="banner-url-row" class="hidden flex gap-2">
+                <input type="text" id="banner-url" readonly class="input text-[11px] font-mono" onfocus="this.select()" />
+                <button type="button" onclick="copyBannerUrl()" class="btn-ghost shrink-0" title="Copy public URL"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+              </div>
+            </div>
+
             <div>
               <div class="flex items-center justify-between gap-2 flex-wrap">
                 <label class="label !mb-0" for="exam-instructions">Instructions <span class="normal-case tracking-normal font-semibold text-slate-400">(shown to students before they start — pre-filled for every exam)</span></label>
@@ -1767,7 +1828,7 @@
     function updateGreeting() {
       const h = new Date().getHours();
       const g = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
-      document.getElementById('greeting').innerText = `${g}, Wonde!👋`;
+      document.getElementById('greeting').innerText = `${g},Wonde!👋`;
       document.getElementById('live-clock').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) +
         ' · ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
@@ -1997,6 +2058,7 @@
         const id = escX(e.id);
         return `
           <div class="card p-4 sm:p-5 space-y-3">
+            ${safeImgUrl(e.bannerUrl) ? `<img src="${escX(safeImgUrl(e.bannerUrl))}" alt="" loading="lazy" class="w-full h-28 sm:h-32 object-cover rounded-xl border border-slate-200 dark:border-slate-700" onerror="this.remove()" />` : ''}
             <div class="flex items-start justify-between gap-3">
               <h4 class="font-display font-bold text-slate-900 dark:text-white text-sm sm:text-base leading-snug">${escX(e.title || 'Untitled exam')}</h4>
               <span class="badge ${st.cls} shrink-0">${st.label}</span>
@@ -2262,6 +2324,204 @@
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // 🖼️ LIVE MOCK EXAM BANNER  →  Supabase Storage (public bucket "exam-banners")
+    // The public URL is stored on the Firestore exam doc as bannerUrl (+ bannerPath).
+    // ─────────────────────────────────────────────────────────────
+    const SUPABASE_DEFAULTS = { url: '', anonKey: '' };   // optional: hard-code your project here
+    const BANNER_BUCKET = 'exam-banners';
+    const BANNER_MAX_MB = 8;
+
+    function sbConfig() {
+      let url = SUPABASE_DEFAULTS.url, key = SUPABASE_DEFAULTS.anonKey;
+      try { url = localStorage.getItem('ju_sb_url') || url; key = localStorage.getItem('ju_sb_key') || key; } catch (e) {}
+      url = String(url || '').trim().replace(/\/+$/, '');
+      if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
+      return { url, key: String(key || '').trim() };
+    }
+    function sbReady() { const c = sbConfig(); return !!(c.url && c.key); }
+    function sbHeaders(extra) {
+      const c = sbConfig();
+      return Object.assign({ apikey: c.key, Authorization: 'Bearer ' + c.key }, extra || {});
+    }
+    function bannerPublicUrl(path) { return `${sbConfig().url}/storage/v1/object/public/${BANNER_BUCKET}/${path}`; }
+    function safeImgUrl(u) { return /^https?:\/\//i.test(String(u || '')) ? String(u) : ''; }
+
+    function toggleSbSettings(force) {
+      const box = $id('sb-settings');
+      const open = force !== undefined ? force : box.classList.contains('hidden');
+      box.classList.toggle('hidden', !open);
+      if (open) {
+        const c = sbConfig();
+        $id('sb-url').value = c.url; $id('sb-key').value = c.key;
+        lucide.createIcons();
+      }
+    }
+    function setSbStatus(msg, kind) {
+      const el = $id('sb-status');
+      el.className = 'text-[11px] font-semibold ' + (kind === 'ok' ? 'text-emerald-600 dark:text-emerald-400' : kind === 'err' ? 'text-rose-500' : 'text-slate-500 dark:text-slate-400');
+      el.innerText = msg || '';
+    }
+    function saveSbSettings() {
+      let url = $id('sb-url').value.trim().replace(/\/+$/, '');
+      const key = $id('sb-key').value.trim();
+      if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
+      if (!url || !key) return setSbStatus('Enter both the project URL and the anon key.', 'err');
+      try { localStorage.setItem('ju_sb_url', url); localStorage.setItem('ju_sb_key', key); }
+      catch (e) { return setSbStatus('Could not save on this browser.', 'err'); }
+      setSbStatus('Saved on this browser.', 'ok');
+    }
+    async function testSbSettings() {
+      saveSbSettings();
+      if (!sbReady()) return;
+      setSbStatus('Checking bucket…');
+      try {
+        const r = await fetch(`${sbConfig().url}/storage/v1/bucket/${BANNER_BUCKET}`, { headers: sbHeaders() });
+        if (r.ok) {
+          const b = await r.json();
+          setSbStatus(b && b.public === false ? 'Bucket found but it is PRIVATE — make it public.' : 'Connected — bucket "exam-banners" is ready.', b && b.public === false ? 'err' : 'ok');
+        } else if (r.status === 404 || r.status === 400) setSbStatus('Bucket "exam-banners" not found — create it as a public bucket.', 'err');
+        else if (r.status === 401 || r.status === 403) setSbStatus('Key rejected, or the key cannot read bucket info. You can still try an upload.', 'err');
+        else setSbStatus('Unexpected response (' + r.status + ').', 'err');
+      } catch (e) { setSbStatus('Could not reach Supabase. Check the project URL.', 'err'); }
+    }
+
+    // ── preview / state ──
+    function renderBanner() {
+      const d = examDraft; if (!d) return;
+      const url = safeImgUrl(d.bannerUrl);
+      $id('banner-preview').innerHTML = url
+        ? `<img src="${escX(url)}" alt="Exam banner" class="w-full max-h-56 object-cover block" onerror="this.replaceWith(Object.assign(document.createElement('p'),{className:'p-6 text-center text-xs font-semibold text-rose-500',innerText:'Banner image could not be loaded.'}))" />`
+        : `<div class="p-6 text-center text-xs font-semibold text-slate-400"><i data-lucide="image-plus" class="w-6 h-6 mx-auto mb-1.5"></i>Drag an image here or press “Upload banner”<br><span class="font-medium">PNG, JPG, WEBP or GIF · up to ${BANNER_MAX_MB} MB</span></div>`;
+      $id('banner-remove-btn').classList.toggle('hidden', !url);
+      $id('banner-url-row').classList.toggle('hidden', !url);
+      $id('banner-url').value = url;
+      $id('banner-upload-label').innerText = url ? 'Replace banner' : 'Upload banner';
+      lucide.createIcons();
+    }
+    function bannerProgress(pct, msg) {
+      const box = $id('banner-progress');
+      if (pct === null) { box.classList.add('hidden'); return; }
+      box.classList.remove('hidden');
+      $id('banner-bar').style.width = pct + '%';
+      $id('banner-status').innerText = msg || '';
+    }
+    function pickBanner() {
+      if (!examDraft) return;
+      if (!sbReady()) { toggleSbSettings(true); toast('Add your Supabase project URL and anon key first.', 'info', 4500); return; }
+      $id('banner-file').click();
+    }
+    function onBannerPicked(input) {
+      const f = input.files && input.files[0];
+      input.value = '';
+      if (f) handleBannerFile(f);
+    }
+    function onBannerDrop(ev) {
+      ev.preventDefault();
+      $id('banner-drop').classList.remove('ring-2', 'ring-brand-400');
+      const f = ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0];
+      if (!f) return;
+      if (!sbReady()) { toggleSbSettings(true); toast('Add your Supabase project URL and anon key first.', 'info', 4500); return; }
+      handleBannerFile(f);
+    }
+    function copyBannerUrl() {
+      const v = $id('banner-url').value;
+      if (!v) return;
+      (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject()).then(
+        () => toast('Banner URL copied.', 'success'),
+        () => { $id('banner-url').select(); document.execCommand && document.execCommand('copy'); toast('Banner URL copied.', 'success'); });
+    }
+
+    // downscale big images (keeps the app fast); GIFs are left untouched
+    async function prepareBanner(file) {
+      if (!/^image\/(png|jpe?g|webp)$/i.test(file.type)) return file;
+      try {
+        const bmp = await createImageBitmap(file);
+        const maxW = 1600;
+        if (bmp.width <= maxW && file.size <= 1.5 * 1024 * 1024) { bmp.close && bmp.close(); return file; }
+        const scale = Math.min(1, maxW / bmp.width);
+        const c = document.createElement('canvas');
+        c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
+        c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+        bmp.close && bmp.close();
+        let blob = await new Promise(res => c.toBlob(res, 'image/webp', 0.85));
+        if (!blob || blob.type !== 'image/webp') blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.85));
+        if (!blob || blob.size >= file.size) return file;
+        const ext = blob.type === 'image/webp' ? 'webp' : 'jpg';
+        return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.' + ext, { type: blob.type });
+      } catch (e) { return file; }
+    }
+
+    function uploadBannerFile(file, onProgress) {
+      const ext = ({ 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif' })[file.type] || 'png';
+      const path = `banner_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `${sbConfig().url}/storage/v1/object/${BANNER_BUCKET}/${path}`);
+        const h = sbHeaders({ 'Content-Type': file.type, 'cache-control': 'max-age=31536000', 'x-upsert': 'false' });
+        Object.keys(h).forEach(k => xhr.setRequestHeader(k, h[k]));
+        xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)); };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) return resolve({ path, url: bannerPublicUrl(path) });
+          let detail = ''; try { const j = JSON.parse(xhr.responseText); detail = j.message || j.error || ''; } catch (e) {}
+          if (xhr.status === 404 || /bucket not found/i.test(detail)) return reject(new Error('Bucket "exam-banners" was not found. Create it in Supabase as a public bucket.'));
+          if (xhr.status === 401 || xhr.status === 403 || /row-level security|policy|unauthorized/i.test(detail))
+            return reject(new Error('Supabase refused the upload. Check the anon key and add the upload policy (see Storage settings → One-time setup).'));
+          if (xhr.status === 413) return reject(new Error('The image is too large for your Supabase storage limit.'));
+          reject(new Error(detail || ('Upload failed (' + xhr.status + ').')));
+        };
+        xhr.onerror = () => reject(new Error('Network error — could not reach Supabase.'));
+        xhr.send(file);
+      });
+    }
+
+    async function handleBannerFile(file) {
+      const d = examDraft; if (!d) return;
+      if (d.uploading) return toast('A banner is already uploading.', 'info');
+      if (!/^image\/(png|jpe?g|webp|gif)$/i.test(file.type)) return toast('Please choose a PNG, JPG, WEBP or GIF image.', 'error');
+      if (file.size > BANNER_MAX_MB * 1024 * 1024) return toast(`Image is larger than ${BANNER_MAX_MB} MB.`, 'error');
+      if (!sbReady()) { toggleSbSettings(true); return toast('Add your Supabase project URL and anon key first.', 'info', 4500); }
+
+      d.uploading = true;
+      $id('banner-upload-btn').disabled = true;
+      bannerProgress(0, 'Preparing image…');
+      try {
+        const prepared = await prepareBanner(file);
+        bannerProgress(0, 'Uploading…');
+        const res = await uploadBannerFile(prepared, (pct) => bannerProgress(pct, `Uploading… ${pct}%`));
+        if (examDraft !== d) { deleteBannerFile(res.path); return; }   // editor was closed meanwhile
+        d.newPaths.push(res.path);
+        d.bannerUrl = res.url; d.bannerPath = res.path;
+        examDirty = true;
+        renderBanner();
+        toast('Banner uploaded. Press Save & Publish to attach it to the exam.', 'success', 4500);
+      } catch (e) {
+        console.error('Banner upload error:', e);
+        toast(e.message || 'Banner upload failed.', 'error', 7000);
+      } finally {
+        d.uploading = false;
+        $id('banner-upload-btn').disabled = false;
+        bannerProgress(null);
+      }
+    }
+    function removeBanner() {
+      if (!examDraft) return;
+      examDraft.bannerUrl = ''; examDraft.bannerPath = '';
+      examDirty = true;
+      renderBanner();
+    }
+    // best-effort cleanup of files nobody uses any more (needs the delete policy; failures are ignored)
+    function deleteBannerFile(path) {
+      if (!path || !sbReady()) return;
+      try { fetch(`${sbConfig().url}/storage/v1/object/${BANNER_BUCKET}/${path}`, { method: 'DELETE', headers: sbHeaders() }).catch(() => {}); } catch (e) {}
+    }
+    function bannerInUseByOther(path, exceptId) { return rawExams.some(e => e.id !== exceptId && e.bannerPath === path); }
+    function cleanupBannersAfterSave(d) {
+      const keep = d.bannerPath || '';
+      d.newPaths.filter(p => p !== keep).forEach(deleteBannerFile);
+      if (d.origBannerPath && d.origBannerPath !== keep && !bannerInUseByOther(d.origBannerPath, d.id)) deleteBannerFile(d.origBannerPath);
+    }
+
     // ── editor ──
     function blankQuestion() {
       return { questionText: '', options: ['', '', '', '', ''], correctIndex: 0, explanation: '' };
@@ -2280,7 +2540,13 @@
           }))
         : [blankQuestion()];
 
-      examDraft = { id: (src && !asCopy) ? src.id : null, questions: qs };
+      examDraft = {
+        id: (src && !asCopy) ? src.id : null, questions: qs,
+        bannerUrl: src ? String(src.bannerUrl || '') : '',
+        bannerPath: (src && !asCopy) ? String(src.bannerPath || '') : '',
+        origBannerPath: (src && !asCopy) ? String(src.bannerPath || '') : '',
+        newPaths: [], uploading: false, saved: false
+      };
       examDirty = false;
 
       $id('exam-title').value = src ? (asCopy ? 'Copy of ' + (src.title || '') : (src.title || '')) : '';
@@ -2296,6 +2562,7 @@
       warn.querySelector('span').innerText = `${n} student${n === 1 ? ' has' : 's have'} already submitted this exam. Changing questions or correct answers will not re-grade existing submissions.`;
 
       renderQuestions();
+      renderBanner(); bannerProgress(null); toggleSbSettings(false);
       $id('exam-editor').classList.remove('hidden');
       $id('exam-list').classList.add('hidden');
       $id('new-exam-btn').classList.add('hidden');
@@ -2306,6 +2573,7 @@
     // returns true when the editor was closed
     function closeExamEditor(force) {
       if (!force && examDirty && !confirm('Discard your unsaved changes?')) return false;
+      if (examDraft && !examDraft.saved) examDraft.newPaths.forEach(deleteBannerFile);
       examDraft = null;
       examDirty = false;
       $id('exam-editor').classList.add('hidden');
@@ -2425,6 +2693,7 @@
 
     async function saveExam() {
       if (!examDraft) return;
+      if (examDraft.uploading) return toast('Please wait for the banner upload to finish.', 'info');
       const dlRaw = $id('exam-deadline').value;
       const m = {
         title: $id('exam-title').value.trim(),
@@ -2454,6 +2723,8 @@
         title: m.title,
         durationMinutes: m.duration,
         deadlineTimestamp: m.deadline || 0,
+        bannerUrl: safeImgUrl(examDraft.bannerUrl),
+        bannerPath: examDraft.bannerUrl ? (examDraft.bannerPath || '') : '',
         instructions: ($id('exam-instructions').value.trim() || getDefaultInstructions()),
         questions: examDraft.questions.map((q, i) => ({
           id: 'q' + (i + 1),
@@ -2471,6 +2742,8 @@
         if (examDraft.id) await db.collection('live_exams').doc(examDraft.id).set(payload, { merge: true });
         else await db.collection('live_exams').add(payload);
         toast(examDraft.id ? 'Exam updated.' : 'Exam published — students can see it now.', 'success');
+        examDraft.saved = true;
+        cleanupBannersAfterSave(examDraft);
         closeExamEditor(true);
       } catch (e) {
         console.error('Save exam error:', e);
@@ -2490,6 +2763,7 @@
       if (!confirm(msg)) return;
       try {
         await db.collection('live_exams').doc(id).delete();
+        if (e.bannerPath && !bannerInUseByOther(e.bannerPath, id)) deleteBannerFile(e.bannerPath);
         toast('Exam deleted.', 'info');
       } catch (err) {
         toast('Failed to delete exam: ' + err.message, 'error', 6000);
