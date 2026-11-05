@@ -88,25 +88,6 @@
         radial-gradient(700px 400px at 100% 0%, rgba(245,184,61,.12), transparent 60%),
         #F6F7FB;
     }
-    netlify-drawer,
-    #netlify-drawer,
-    div[data-netlify-deploy-id],
-    .netlify-badge,
-    iframe[src*="netlify"],
-    div[class*="netlify"],
-    div:has(> a[href*="netlify.com"]),
-    div:has(> svg[class*="netlify"]) {
-      display: none !important;
-      visibility: hidden !important;
-      opacity: 0 !important;
-      pointer-events: none !important;
-      width: 0 !important;
-      height: 0 !important;
-      position: absolute !important;
-      left: -9999px !important;
-      top: -9999px !important;
-      z-index: -9999 !important;
-    }    
     .dark .bg-ambient {
       background:
         radial-gradient(900px 400px at 10% -10%, rgba(245,158,11,.20), transparent 60%),
@@ -141,6 +122,10 @@
     /* Table row accent for pending */
     tr.row-pending { box-shadow: inset 3px 0 0 #F59E0B; }
 
+    /* Desktop tabs: icon-only below 1280px (active tab keeps its label) so five tabs always fit */
+    .tab-btn .tab-label { display:none; }
+    .tab-btn.active .tab-label { display:inline; }
+    @media (min-width:1280px) { .tab-btn .tab-label { display:inline; } }
     .tab-btn.active { background:#fff; color:#B45309; box-shadow:0 1px 3px rgba(15,23,42,.12); }
     .dark .tab-btn.active { background:#1E293B; color:#FDE68A; }
 
@@ -242,23 +227,26 @@
 
         <!-- Navigation Tabs (desktop) -->
         <nav class="hidden md:flex gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl text-xs font-semibold">
-          <button onclick="switchTab('payments')" id="tab-btn-payments" class="tab-btn active px-4 py-2 rounded-lg text-slate-600 dark:text-slate-300 flex items-center gap-1.5 transition">
-            <i data-lucide="receipt" class="w-3.5 h-3.5"></i><span>Payments</span>
+          <button onclick="switchTab('payments')" id="tab-btn-payments" title="Payments" class="tab-btn active px-4 py-2 rounded-lg text-slate-600 dark:text-slate-300 flex items-center gap-1.5 transition">
+            <i data-lucide="receipt" class="w-3.5 h-3.5"></i><span class="tab-label">Payments</span>
             <span id="tab-badge-pending" class="hidden min-w-[1.25rem] text-center px-1.5 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-extrabold">0</span>
           </button>
-          <button onclick="switchTab('students')" id="tab-btn-students" class="tab-btn px-4 py-2 rounded-lg text-slate-600 dark:text-slate-300 flex items-center gap-1.5 transition">
-            <i data-lucide="users" class="w-3.5 h-3.5"></i><span>Students</span>
+          <button onclick="switchTab('students')" id="tab-btn-students" title="Students" class="tab-btn px-4 py-2 rounded-lg text-slate-600 dark:text-slate-300 flex items-center gap-1.5 transition">
+            <i data-lucide="users" class="w-3.5 h-3.5"></i><span class="tab-label">Students</span>
           </button>
-          <button onclick="switchTab('announcements')" id="tab-btn-announcements" class="tab-btn px-4 py-2 rounded-lg text-slate-600 dark:text-slate-300 flex items-center gap-1.5 transition">
-            <i data-lucide="megaphone" class="w-3.5 h-3.5"></i><span>Announcements</span>
+          <button onclick="switchTab('announcements')" id="tab-btn-announcements" title="Announcements" class="tab-btn px-4 py-2 rounded-lg text-slate-600 dark:text-slate-300 flex items-center gap-1.5 transition">
+            <i data-lucide="megaphone" class="w-3.5 h-3.5"></i><span class="tab-label">Announcements</span>
           </button>
-          <button onclick="switchTab('notifications')" id="tab-btn-notifications" class="tab-btn px-4 py-2 rounded-lg text-slate-600 dark:text-slate-300 flex items-center gap-1.5 transition">
-            <i data-lucide="bell" class="w-3.5 h-3.5"></i><span>Alerts</span>
+          <button onclick="switchTab('notifications')" id="tab-btn-notifications" title="Alerts" class="tab-btn px-4 py-2 rounded-lg text-slate-600 dark:text-slate-300 flex items-center gap-1.5 transition">
+            <i data-lucide="bell" class="w-3.5 h-3.5"></i><span class="tab-label">Alerts</span>
+          </button>
+          <button onclick="switchTab('exams')" id="tab-btn-exams" title="Mock Exams" class="tab-btn px-4 py-2 rounded-lg text-slate-600 dark:text-slate-300 flex items-center gap-1.5 transition">
+            <i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i><span class="tab-label">Mock Exams</span>
           </button>
         </nav>
 
         <div class="flex items-center gap-1.5">
-          <span id="admin-user-display" class="secret-blur hidden xl:inline text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 px-2.5 py-1.5 rounded-lg"></span>
+          <span id="admin-user-display" class="secret-blur hidden 2xl:inline text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 px-2.5 py-1.5 rounded-lg"></span>
 
           <button onclick="requestNotificationPermission()" id="push-perm-btn" class="btn-ghost !px-2.5" title="Enable browser alerts">
             <i data-lucide="bell-ring" class="w-4 h-4 text-brand-600 dark:text-brand-400"></i>
@@ -285,7 +273,7 @@
     </header>
 
     <!-- Mobile bottom nav -->
-    <nav class="md:hidden fixed bottom-3 left-3 right-3 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl shadow-slate-900/10 grid grid-cols-4 p-1.5 text-[11px] font-semibold">
+    <nav class="md:hidden fixed bottom-3 left-3 right-3 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl shadow-slate-900/10 grid grid-cols-5 p-1.5 text-[11px] font-semibold">
       <button onclick="switchTab('payments')" id="mob-tab-payments" class="relative flex flex-col items-center gap-0.5 py-2 rounded-xl text-slate-500">
         <i data-lucide="receipt" class="w-5 h-5"></i><span>Payments</span>
         <span id="mob-badge-pending" class="hidden absolute top-1 right-4 min-w-[1.1rem] text-center px-1 rounded-full bg-amber-500 text-white text-[9px] font-extrabold">0</span>
@@ -298,6 +286,9 @@
       </button>
       <button onclick="switchTab('notifications')" id="mob-tab-notifications" class="flex flex-col items-center gap-0.5 py-2 rounded-xl text-slate-500">
         <i data-lucide="bell" class="w-5 h-5"></i><span>Alerts</span>
+      </button>
+      <button onclick="switchTab('exams')" id="mob-tab-exams" class="flex flex-col items-center gap-0.5 py-2 rounded-xl text-slate-500">
+        <i data-lucide="clipboard-check" class="w-5 h-5"></i><span>Exams</span>
       </button>
     </nav>
 
@@ -541,7 +532,7 @@
             </h3>
             <ul class="space-y-3 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               <li class="flex gap-2.5"><i data-lucide="mouse-pointer-click" class="w-4 h-4 shrink-0 text-brand-500 mt-0.5"></i><span><b>Click any TxRef or phone number</b> to copy it instantly — paste it straight into your Telebirr / CBE app to double-check.</span></li>
-              <li class="flex gap-2.5"><i data-lucide="keyboard" class="w-4 h-4 shrink-0 text-brand-500 mt-0.5"></i><span>Press <span class="kbd">1</span>–<span class="kbd">4</span> to jump between tabs and <span class="kbd">/</span> to focus search. <span class="kbd">?</span> shows all shortcuts.</span></li>
+              <li class="flex gap-2.5"><i data-lucide="keyboard" class="w-4 h-4 shrink-0 text-brand-500 mt-0.5"></i><span>Press <span class="kbd">1</span>–<span class="kbd">5</span> to jump between tabs and <span class="kbd">/</span> to focus search. <span class="kbd">?</span> shows all shortcuts.</span></li>
               <li class="flex gap-2.5"><i data-lucide="download" class="w-4 h-4 shrink-0 text-brand-500 mt-0.5"></i><span><b>Export CSV</b> from Payments or Students for backups, Excel reports and accounting.</span></li>
               <li class="flex gap-2.5"><i data-lucide="tag" class="w-4 h-4 shrink-0 text-brand-500 mt-0.5"></i><span>The browser tab title shows <b>(N)</b> pending receipts — pin the tab and you'll never miss one.</span></li>
               <li class="flex gap-2.5"><i data-lucide="volume-x" class="w-4 h-4 shrink-0 text-brand-500 mt-0.5"></i><span>Working late? Use the <b>speaker button</b> to mute the chime — Telegram alerts still come through.</span></li>
@@ -591,6 +582,153 @@
         </div>
       </section>
 
+
+      <!-- ======================== TAB 5: LIVE MOCK EXAMS ======================== -->
+      <section id="view-exams" class="hidden space-y-4">
+
+        <!-- Sub navigation -->
+        <div class="card p-3 sm:p-4 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+          <div class="flex flex-wrap gap-2">
+            <button id="subtab-exams" onclick="switchExamSub('exams')" class="chip chip-active">
+              <i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i>Exams
+              <span id="exam-count-badge" class="bg-black/10 dark:bg-white/15 px-1.5 rounded-full text-[10px] font-extrabold">0</span>
+            </button>
+            <button id="subtab-subs" onclick="switchExamSub('subs')" class="chip">
+              <i data-lucide="inbox" class="w-3.5 h-3.5"></i>Submissions
+              <span id="sub-count-badge" class="bg-black/10 dark:bg-white/15 px-1.5 rounded-full text-[10px] font-extrabold">0</span>
+            </button>
+            <button id="subtab-top" onclick="switchExamSub('top')" class="chip">
+              <i data-lucide="trophy" class="w-3.5 h-3.5"></i>Top 10
+            </button>
+          </div>
+          <button id="new-exam-btn" onclick="openExamEditor()" class="btn-primary shrink-0">
+            <i data-lucide="plus" class="w-4 h-4"></i><span>New Live Exam</span>
+          </button>
+        </div>
+
+        <!-- Exam / search filter bar (Submissions + Top 10) -->
+        <div id="exam-filter-bar" class="hidden card p-3 sm:p-4 flex flex-col lg:flex-row gap-3 lg:items-center">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap">Exam</span>
+            <select id="exam-filter" onchange="renderExamSubs(); renderTop10();" class="input !py-2 text-xs font-semibold lg:!w-72"></select>
+          </div>
+          <div id="exam-subs-tools" class="flex flex-col sm:flex-row gap-3 lg:flex-1 sm:items-center">
+            <div class="relative flex-1">
+              <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+              <input type="text" id="sub-search" oninput="renderExamSubs()" placeholder="Search by student name or email…" class="input pl-10" />
+            </div>
+            <select id="sub-sort" onchange="renderExamSubs()" class="input !w-auto !py-2 text-xs font-semibold">
+              <option value="newest">Newest first</option>
+              <option value="high">Highest score</option>
+              <option value="low">Lowest score</option>
+              <option value="pen">Most penalties</option>
+            </select>
+            <button onclick="exportSubmissionsCSV()" class="btn-ghost shrink-0"><i data-lucide="download" class="w-4 h-4"></i><span>Export CSV</span></button>
+          </div>
+        </div>
+
+        <!-- ───── Panel: exams (list + editor) ───── -->
+        <div id="exam-panel-exams" class="space-y-4">
+
+          <div id="exam-editor" class="hidden card p-4 sm:p-6 space-y-5">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h3 id="editor-heading" class="text-base sm:text-lg font-display font-bold text-slate-900 dark:text-white">Create Live Exam</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Saved to the <code class="font-mono">live_exams</code> collection and visible to students in the app right away.</p>
+              </div>
+              <button onclick="closeExamEditor()" class="btn-ghost !px-2.5" title="Close"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+
+            <div id="exam-editor-warning" class="hidden flex gap-2.5 items-start p-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-xs font-semibold text-amber-800 dark:text-amber-300">
+              <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0 mt-0.5"></i><span></span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="md:col-span-3">
+                <label class="label" for="exam-title">Exam title</label>
+                <input type="text" id="exam-title" oninput="examDirty = true" maxlength="200" placeholder="e.g. Freshman Mathematics Midterm Live Mock Exam 2024" class="input" />
+              </div>
+              <div>
+                <label class="label" for="exam-duration">Duration (minutes)</label>
+                <input type="number" id="exam-duration" oninput="examDirty = true" min="1" max="1440" step="1" inputmode="numeric" placeholder="60" class="input" />
+              </div>
+              <div class="md:col-span-2">
+                <label class="label" for="exam-deadline">Deadline <span class="normal-case tracking-normal font-semibold text-slate-400">(optional — exam closes at this time)</span></label>
+                <div class="flex gap-2">
+                  <input type="datetime-local" id="exam-deadline" oninput="examDirty = true" class="input" />
+                  <button type="button" onclick="document.getElementById('exam-deadline').value=''; examDirty = true;" class="btn-ghost shrink-0">No deadline</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between gap-3 pt-1">
+              <h4 class="font-display font-bold text-slate-900 dark:text-white text-sm sm:text-base flex items-center gap-2">
+                Questions <span id="q-count" class="text-[11px] bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full font-extrabold">0</span>
+              </h4>
+              <button type="button" onclick="addQuestion()" class="btn-ghost"><i data-lucide="plus" class="w-4 h-4"></i><span>Add question</span></button>
+            </div>
+
+            <div id="q-list" class="space-y-4"></div>
+
+            <button type="button" onclick="addQuestion()" class="w-full py-3 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-500 dark:text-slate-400 hover:border-brand-500 hover:text-brand-600 dark:hover:text-brand-400 transition flex items-center justify-center gap-1.5">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i> Add another question
+            </button>
+
+            <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+              <button type="button" onclick="closeExamEditor()" class="btn-ghost py-2.5">Cancel</button>
+              <button type="button" id="exam-save-btn" onclick="saveExam()" class="btn-primary py-2.5 sm:min-w-[11rem]">
+                <i data-lucide="rocket" class="w-4 h-4"></i><span>Save &amp; Publish</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="exam-list" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="card p-5 space-y-3"><div class="skeleton h-5 w-2/3"></div><div class="skeleton h-4 w-1/2"></div><div class="skeleton h-9"></div></div>
+            <div class="card p-5 space-y-3 hidden lg:block"><div class="skeleton h-5 w-2/3"></div><div class="skeleton h-4 w-1/2"></div><div class="skeleton h-9"></div></div>
+          </div>
+        </div>
+
+        <!-- ───── Panel: submissions ───── -->
+        <div id="exam-panel-subs" class="hidden space-y-4">
+          <div id="sub-stats" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></div>
+          <div class="card overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800">
+                  <tr>
+                    <th class="th">Student</th>
+                    <th class="th">Exam</th>
+                    <th class="th">Score</th>
+                    <th class="th">Penalties</th>
+                    <th class="th">Time taken</th>
+                    <th class="th">Submitted</th>
+                    <th class="th text-right">Raw</th>
+                  </tr>
+                </thead>
+                <tbody id="subs-tbody" class="divide-y divide-slate-100 dark:divide-slate-800">
+                  <tr><td colspan="7" class="p-4"><div class="space-y-3"><div class="skeleton h-10"></div><div class="skeleton h-10"></div></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ───── Panel: top 10 ───── -->
+        <div id="exam-panel-top" class="hidden space-y-4">
+          <div class="card p-4 sm:p-5">
+            <div class="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <h3 class="font-display font-bold text-slate-900 dark:text-white text-base flex items-center gap-2"><span>🏆</span> Top 10 Scorers</h3>
+                <p id="top-sub" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5"></p>
+              </div>
+              <button onclick="exportTopCSV()" class="btn-ghost shrink-0"><i data-lucide="download" class="w-4 h-4"></i><span>Export</span></button>
+            </div>
+            <div id="top-list" class="space-y-2"></div>
+          </div>
+        </div>
+
+      </section>
+
       <footer class="pt-4 pb-2 text-center text-[11px] text-slate-400 dark:text-slate-500 no-print">
         Alpha Tech Ⓒ All Right reserved 2026 · Authorized: By Wondmagegn Yohannes
       </footer>
@@ -637,13 +775,25 @@
         <li class="flex justify-between"><span>Payments tab</span><span class="kbd">1</span></li>
         <li class="flex justify-between"><span>Students tab</span><span class="kbd">2</span></li>
         <li class="flex justify-between"><span>Announcements tab</span><span class="kbd">3</span></li>
-        <li class="flex justify-between"><span>Alerts & Bot tab</span><span class="kbd">4</span></li>
+        <li class="flex justify-between"><span>Alerts tab</span><span class="kbd">4</span></li>
+        <li class="flex justify-between"><span>Mock Exams tab</span><span class="kbd">5</span></li>
         <li class="flex justify-between"><span>Focus search</span><span class="kbd">/</span></li>
         <li class="flex justify-between"><span>Toggle dark mode</span><span class="kbd">D</span></li>
         <li class="flex justify-between"><span>Mute / unmute chime</span><span class="kbd">M</span></li>
         <li class="flex justify-between"><span>Show this help</span><span class="kbd">?</span></li>
         <li class="flex justify-between"><span>Close any dialog</span><span class="kbd">Esc</span></li>
       </ul>
+    </div>
+  </div>
+
+  <!-- ======================== SUBMISSION RAW DATA MODAL ======================== -->
+  <div id="sub-raw-modal" class="hidden fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onclick="if(event.target===this) closeSubRaw()">
+    <div class="card !bg-white dark:!bg-slate-900 max-w-lg w-full p-5 space-y-3 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <h3 class="font-display font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2"><i data-lucide="braces" class="w-4 h-4 text-brand-500"></i> Submission data</h3>
+        <button onclick="closeSubRaw()" class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <pre id="sub-raw-pre" class="text-[11px] font-mono bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 max-h-[60vh] overflow-auto whitespace-pre-wrap break-all text-slate-700 dark:text-slate-200"></pre>
     </div>
   </div>
 
@@ -683,6 +833,7 @@
           const displayEl = document.getElementById('admin-user-display');
           if (displayEl) { displayEl.innerText = user.email; }
           startFirestoreListeners();
+          startExamListeners();
           lucide.createIcons();
         } else if (user) {
           document.getElementById('auth-modal').classList.remove('hidden');
@@ -1358,7 +1509,7 @@
     }
 
     function switchTab(tabId) {
-      ['payments', 'students', 'announcements', 'notifications'].forEach(tab => {
+      ['payments', 'students', 'announcements', 'notifications', 'exams'].forEach(tab => {
         const view = document.getElementById(`view-${tab}`);
         const btn = document.getElementById(`tab-btn-${tab}`);
         const mobBtn = document.getElementById(`mob-tab-${tab}`);
@@ -1584,7 +1735,7 @@
     function updateGreeting() {
       const h = new Date().getHours();
       const g = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
-      document.getElementById('greeting').innerText = `${g}, Wonde!👋`;
+      document.getElementById('greeting').innerText = `${g}, Admin 👋`;
       document.getElementById('live-clock').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) +
         ' · ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
@@ -1599,9 +1750,9 @@
     // Paste permanent image links here (or upload from Alerts & Bot tab).
     // ─────────────────────────────────────────────────────────────
     const JU_BRANDING = {
-      logo: 'file_0000000038ec821190116c867f864f21.png',        // image file kept in the SAME folder as this HTML file; or e.g. 'https://yourdomain.com/ju-logo.png'
-      loginPhoto: 'Floating Books and Bright Ideas.png',  // e.g. 'https://yourdomain.com/campus-login.jpg'
-      dashPhoto: 'Learning Journey to the Stars.png'    // e.g. 'https://yourdomain.com/campus-banner.jpg'
+      logo: 'Generated Image October 30, 2026 - 10_10PM.png',        // image file kept in the SAME folder as this HTML file; or e.g. 'https://yourdomain.com/ju-logo.png'
+      loginPhoto: '',  // e.g. 'https://yourdomain.com/campus-login.jpg'
+      dashPhoto: ''    // e.g. 'https://yourdomain.com/campus-banner.jpg'
     };
 
     function safeSrc(u) { return (u.startsWith('data:') || u.includes('%')) ? u : encodeURI(u); }
@@ -1678,6 +1829,629 @@
       toast('Image removed.', 'info', 1800);
     }
 
+
+    // ─────────────────────────────────────────────────────────────
+    // 📝 LIVE MOCK EXAM MANAGER
+    // Firestore: "live_exams" (exams)  ·  "live_exam_submissions" (student results)
+    // ─────────────────────────────────────────────────────────────
+    let rawExams = [];
+    let rawSubs = [];
+    let subsNorm = [];
+    let examsLoaded = false;
+    let examListenersStarted = false;
+    let examDraft = null;
+    let examDirty = false;
+    let examsError = null;
+    let subsError = null;
+
+    const LETTERS = ['A', 'B', 'C', 'D'];
+    const $id = (id) => document.getElementById(id);
+    const escX = (v) => String(v == null ? '' : v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+    // ── small formatters ──
+    function num(v) {
+      if (v === undefined || v === null || v === '') return null;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    }
+    function fmtNum(n) {
+      if (n === null || n === undefined) return '—';
+      return Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100);
+    }
+    function fmtDateTime(ms) {
+      return new Date(ms).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+    function fmtClock(sec) {
+      if (sec === null || sec === undefined) return '—';
+      sec = Math.max(0, Math.round(sec));
+      const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+      const p = (n) => String(n).padStart(2, '0');
+      return h ? `${h}:${p(m)}:${p(s)}` : `${m}:${p(s)}`;
+    }
+    function toLocalInput(ms) {
+      if (!ms) return '';
+      const d = new Date(ms), p = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+    }
+
+    // ── listeners (own functions; existing listeners are untouched) ──
+    function startExamListeners() {
+      if (examListenersStarted) return;
+      examListenersStarted = true;
+
+      db.collection('live_exams').onSnapshot((snap) => {
+        rawExams = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        examsLoaded = true;
+        examsError = null;
+        refreshExamData();
+      }, (err) => {
+        console.error('live_exams listener error:', err);
+        examsLoaded = true;
+        examsError = err.message;
+        renderExamList();
+      });
+
+      db.collection('live_exam_submissions').onSnapshot((snap) => {
+        rawSubs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        subsError = null;
+        refreshExamData();
+      }, (err) => {
+        console.error('live_exam_submissions listener error:', err);
+        subsError = err.message;
+        renderExamSubs();
+        renderTop10();
+      });
+
+      // keep "Open / Closing soon / Closed" fresh
+      setInterval(() => { if (examsLoaded) renderExamList(); }, 60000);
+    }
+
+    function refreshExamData() {
+      subsNorm = rawSubs.map(normSub);
+      $id('exam-count-badge').innerText = rawExams.length;
+      $id('sub-count-badge').innerText = rawSubs.length;
+      rebuildExamFilter();
+      renderExamList();
+      renderExamSubs();
+      renderTop10();
+    }
+
+    // ── exam helpers ──
+    function examStatus(e) {
+      const dl = Number(e.deadlineTimestamp) || 0;
+      const now = Date.now();
+      if (!dl) return { key: 'open', label: 'Open', note: 'No deadline', cls: 'badge-approved' };
+      if (dl <= now) return { key: 'closed', label: 'Closed', note: 'Closed ' + fmtDateTime(dl), cls: 'badge-rejected' };
+      const soon = dl - now < 24 * 3600 * 1000;
+      return { key: soon ? 'soon' : 'open', label: soon ? 'Closing soon' : 'Open', note: 'Closes ' + fmtDateTime(dl), cls: soon ? 'badge-pending' : 'badge-approved' };
+    }
+
+    function sortedExams() {
+      const closed = (e) => examStatus(e).key === 'closed';
+      const dlKey = (e) => Number(e.deadlineTimestamp) || Number.MAX_SAFE_INTEGER;
+      return [...rawExams].sort((a, b) => {
+        if (closed(a) !== closed(b)) return closed(a) ? 1 : -1;
+        if (closed(a)) return (b.deadlineTimestamp || 0) - (a.deadlineTimestamp || 0);
+        return (dlKey(a) - dlKey(b)) || String(a.title || '').localeCompare(String(b.title || ''));
+      });
+    }
+
+    function renderExamList() {
+      const box = $id('exam-list');
+      if (!examsLoaded) return;
+      if (examsError) {
+        box.innerHTML = `<div class="card p-8 text-center text-rose-500 text-sm font-semibold lg:col-span-2">Error reading live_exams: ${escX(examsError)}</div>`;
+        return;
+      }
+      const exams = sortedExams();
+
+      if (!exams.length) {
+        box.innerHTML = `<div class="card p-10 text-center lg:col-span-2">
+          <div class="mx-auto w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-3"><i data-lucide="clipboard-list" class="w-6 h-6"></i></div>
+          <p class="text-sm font-semibold text-slate-600 dark:text-slate-300">No live exams yet.</p>
+          <p class="text-xs text-slate-400 mt-1 mb-4">Create your first Live Mock Exam and publish it to the student app.</p>
+          <button onclick="openExamEditor()" class="btn-primary"><i data-lucide="plus" class="w-4 h-4"></i>New Live Exam</button></div>`;
+        lucide.createIcons();
+        return;
+      }
+
+      box.innerHTML = exams.map(e => {
+        const st = examStatus(e);
+        const qn = Array.isArray(e.questions) ? e.questions.length : 0;
+        const subs = subsNorm.filter(s => s.examId === e.id);
+        const withPct = subs.filter(s => s.pct !== null);
+        const avg = withPct.length ? Math.round(withPct.reduce((a, s) => a + s.pct, 0) / withPct.length) : null;
+        const id = escX(e.id);
+        return `
+          <div class="card p-4 sm:p-5 space-y-3">
+            <div class="flex items-start justify-between gap-3">
+              <h4 class="font-display font-bold text-slate-900 dark:text-white text-sm sm:text-base leading-snug">${escX(e.title || 'Untitled exam')}</h4>
+              <span class="badge ${st.cls} shrink-0">${st.label}</span>
+            </div>
+            <div class="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+              <span class="inline-flex items-center gap-1.5"><i data-lucide="timer" class="w-3.5 h-3.5"></i>${Number(e.durationMinutes) || 0} min</span>
+              <span class="inline-flex items-center gap-1.5"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i>${qn} question${qn === 1 ? '' : 's'}</span>
+              <span class="inline-flex items-center gap-1.5"><i data-lucide="calendar-clock" class="w-3.5 h-3.5"></i>${escX(st.note)}</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs font-bold">
+              <span class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">${subs.length} submission${subs.length === 1 ? '' : 's'}</span>
+              ${avg !== null ? `<span class="px-2 py-1 rounded-lg bg-brand-50 dark:bg-brand-500/15 text-brand-700 dark:text-brand-200">Avg ${avg}%</span>` : ''}
+            </div>
+            <div class="flex flex-wrap gap-2 pt-1">
+              <button class="btn-primary" onclick="openExamEditor('${id}')"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>Edit</button>
+              <button class="btn-ghost" onclick="gotoExamSubs('${id}','subs')"><i data-lucide="inbox" class="w-3.5 h-3.5"></i>Submissions</button>
+              <button class="btn-ghost" onclick="gotoExamSubs('${id}','top')"><i data-lucide="trophy" class="w-3.5 h-3.5"></i>Top 10</button>
+              <button class="btn-ghost" onclick="openExamEditor('${id}', true)" title="Duplicate as a new exam"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+              <button class="btn-danger sm:ml-auto" onclick="deleteExam('${id}')"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>Delete</button>
+            </div>
+          </div>`;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    // ── sub-tabs ──
+    function switchExamSub(sub) {
+      ['exams', 'subs', 'top'].forEach(k => {
+        $id('exam-panel-' + k).classList.toggle('hidden', k !== sub);
+        $id('subtab-' + k).classList.toggle('chip-active', k === sub);
+      });
+      $id('exam-filter-bar').classList.toggle('hidden', sub === 'exams');
+      $id('exam-subs-tools').classList.toggle('hidden', sub !== 'subs');
+      $id('new-exam-btn').classList.toggle('hidden', sub !== 'exams' || !!examDraft);
+      if (sub === 'subs') renderExamSubs();
+      if (sub === 'top') renderTop10();
+      lucide.createIcons();
+    }
+
+    function gotoExamSubs(examId, sub) {
+      if (examDraft && !closeExamEditor()) return;
+      switchTab('exams');
+      $id('exam-filter').value = examId;
+      switchExamSub(sub);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ── editor ──
+    function blankQuestion() {
+      return { questionText: '', options: ['', '', '', ''], correctIndex: 0, explanation: '' };
+    }
+
+    function openExamEditor(id, asCopy) {
+      const src = id ? rawExams.find(e => e.id === id) : null;
+      if (id && !src) return toast('Exam not found.', 'error');
+
+      const qs = src && Array.isArray(src.questions) && src.questions.length
+        ? [...src.questions].sort((a, b) => (a.questionNumber || 0) - (b.questionNumber || 0)).map(q => ({
+            questionText: String(q.questionText || ''),
+            options: [0, 1, 2, 3].map(j => (q.options && q.options[j] != null) ? String(q.options[j]) : ''),
+            correctIndex: (Number.isInteger(q.correctIndex) && q.correctIndex >= 0 && q.correctIndex <= 3) ? q.correctIndex : 0,
+            explanation: String(q.explanation || '')
+          }))
+        : [blankQuestion()];
+
+      examDraft = { id: (src && !asCopy) ? src.id : null, questions: qs };
+      examDirty = false;
+
+      $id('exam-title').value = src ? (asCopy ? 'Copy of ' + (src.title || '') : (src.title || '')) : '';
+      $id('exam-duration').value = src ? (Number(src.durationMinutes) || '') : 60;
+      $id('exam-deadline').value = (src && !asCopy) ? toLocalInput(Number(src.deadlineTimestamp) || 0) : '';
+      $id('editor-heading').innerText = examDraft.id ? 'Edit Live Exam' : (asCopy ? 'Duplicate Live Exam' : 'Create Live Exam');
+
+      const n = examDraft.id ? subsNorm.filter(s => s.examId === examDraft.id).length : 0;
+      const warn = $id('exam-editor-warning');
+      warn.classList.toggle('hidden', n === 0);
+      warn.querySelector('span').innerText = `${n} student${n === 1 ? ' has' : 's have'} already submitted this exam. Changing questions or correct answers will not re-grade existing submissions.`;
+
+      renderQuestions();
+      $id('exam-editor').classList.remove('hidden');
+      $id('exam-list').classList.add('hidden');
+      $id('new-exam-btn').classList.add('hidden');
+      lucide.createIcons();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // returns true when the editor was closed
+    function closeExamEditor(force) {
+      if (!force && examDirty && !confirm('Discard your unsaved changes?')) return false;
+      examDraft = null;
+      examDirty = false;
+      $id('exam-editor').classList.add('hidden');
+      $id('exam-list').classList.remove('hidden');
+      $id('new-exam-btn').classList.remove('hidden');
+      return true;
+    }
+
+    const optBox = (on) => 'flex items-center gap-2 rounded-xl border px-3 py-2 transition ' + (on
+      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 ring-1 ring-emerald-500/40'
+      : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900');
+
+    function renderQuestions() {
+      const qs = examDraft.questions;
+      $id('q-count').innerText = qs.length;
+      $id('q-list').innerHTML = qs.map((q, i) => `
+        <div id="qcard-${i}" class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-900/50 p-3 sm:p-4 space-y-3">
+          <div class="flex items-center justify-between gap-2">
+            <span class="inline-flex items-center justify-center min-w-[2rem] h-8 px-2 rounded-lg bg-gradient-to-br from-brand-600 to-brand-800 text-white text-xs font-extrabold">Q${i + 1}</span>
+            <div class="flex gap-1">
+              <button type="button" class="btn-ghost !px-2" onclick="moveQ(${i}, -1)" ${i === 0 ? 'disabled' : ''} title="Move up"><i data-lucide="arrow-up" class="w-3.5 h-3.5"></i></button>
+              <button type="button" class="btn-ghost !px-2" onclick="moveQ(${i}, 1)" ${i === qs.length - 1 ? 'disabled' : ''} title="Move down"><i data-lucide="arrow-down" class="w-3.5 h-3.5"></i></button>
+              <button type="button" class="btn-ghost !px-2" onclick="dupQ(${i})" title="Duplicate question"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+              <button type="button" class="btn-danger !px-2" onclick="delQ(${i})" title="Delete question"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+            </div>
+          </div>
+
+          <div>
+            <label class="label">Question text</label>
+            <textarea rows="3" oninput="updQ(${i}, 'questionText', this.value)" placeholder="Type the question (plain text or equation text)…" class="input resize-y">${escX(q.questionText)}</textarea>
+          </div>
+
+          <div>
+            <label class="label">Options — select the correct answer</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              ${[0, 1, 2, 3].map(j => `
+                <label id="opt-${i}-${j}" class="${optBox(q.correctIndex === j)}">
+                  <input type="radio" name="correct-${i}" ${q.correctIndex === j ? 'checked' : ''} onchange="setCorrect(${i}, ${j})" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500 shrink-0" title="Mark ${LETTERS[j]} as correct" />
+                  <span class="w-4 text-xs font-extrabold text-slate-500 dark:text-slate-400 shrink-0">${LETTERS[j]}</span>
+                  <input type="text" value="${escX(q.options[j])}" oninput="updOpt(${i}, ${j}, this.value)" placeholder="Option ${LETTERS[j]}" class="flex-1 min-w-0 bg-transparent outline-none text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400" />
+                </label>`).join('')}
+            </div>
+          </div>
+
+          <div>
+            <label class="label">Explanation <span class="normal-case tracking-normal font-semibold text-slate-400">(step-by-step solution shown after the exam)</span></label>
+            <textarea rows="3" oninput="updQ(${i}, 'explanation', this.value)" placeholder="Explain how to reach the correct answer…" class="input resize-y">${escX(q.explanation)}</textarea>
+          </div>
+        </div>`).join('');
+      lucide.createIcons();
+    }
+
+    function clearQErr(i) {
+      const el = $id('qcard-' + i);
+      if (el) el.classList.remove('!border-rose-400', 'ring-2', 'ring-rose-300');
+    }
+    function updQ(i, key, val) { examDraft.questions[i][key] = val; examDirty = true; clearQErr(i); }
+    function updOpt(i, j, val) { examDraft.questions[i].options[j] = val; examDirty = true; clearQErr(i); }
+    function setCorrect(i, j) {
+      examDraft.questions[i].correctIndex = j;
+      examDirty = true;
+      [0, 1, 2, 3].forEach(k => { const el = $id(`opt-${i}-${k}`); if (el) el.className = optBox(k === j); });
+    }
+    function addQuestion() {
+      examDraft.questions.push(blankQuestion());
+      examDirty = true;
+      renderQuestions();
+      const card = $id('qcard-' + (examDraft.questions.length - 1));
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const ta = card.querySelector('textarea');
+      if (ta) ta.focus({ preventScroll: true });
+    }
+    function moveQ(i, dir) {
+      const qs = examDraft.questions, k = i + dir;
+      if (k < 0 || k >= qs.length) return;
+      [qs[i], qs[k]] = [qs[k], qs[i]];
+      examDirty = true;
+      renderQuestions();
+      const el = $id('qcard-' + k); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    function dupQ(i) {
+      const q = examDraft.questions[i];
+      examDraft.questions.splice(i + 1, 0, { questionText: q.questionText, options: [...q.options], correctIndex: q.correctIndex, explanation: q.explanation });
+      examDirty = true;
+      renderQuestions();
+      const el = $id('qcard-' + (i + 1)); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    function delQ(i) {
+      const q = examDraft.questions[i];
+      const hasContent = q.questionText.trim() || q.options.some(o => o.trim()) || q.explanation.trim();
+      if (hasContent && !confirm(`Delete question ${i + 1}?`)) return;
+      examDraft.questions.splice(i, 1);
+      if (!examDraft.questions.length) examDraft.questions.push(blankQuestion());
+      examDirty = true;
+      renderQuestions();
+    }
+
+    // ── validate + save ──
+    function validateExam(m) {
+      if (!m.title) return { msg: 'Please enter an exam title.', field: 'exam-title' };
+      if (!m.durRaw || !Number.isInteger(m.duration) || m.duration < 1 || m.duration > 1440)
+        return { msg: 'Duration must be a whole number of minutes between 1 and 1440.', field: 'exam-duration' };
+      if (m.dlRaw && Number.isNaN(m.deadline)) return { msg: 'The deadline date is not valid.', field: 'exam-deadline' };
+      if (!examDraft.questions.length) return { msg: 'Add at least one question.' };
+      for (let i = 0; i < examDraft.questions.length; i++) {
+        const q = examDraft.questions[i];
+        if (!q.questionText.trim()) return { msg: `Question ${i + 1}: enter the question text.`, q: i };
+        for (let j = 0; j < 4; j++) {
+          if (!q.options[j].trim()) return { msg: `Question ${i + 1}: option ${LETTERS[j]} is empty.`, q: i };
+        }
+        if (!Number.isInteger(q.correctIndex) || q.correctIndex < 0 || q.correctIndex > 3)
+          return { msg: `Question ${i + 1}: choose the correct option.`, q: i };
+      }
+      return null;
+    }
+
+    async function saveExam() {
+      if (!examDraft) return;
+      const dlRaw = $id('exam-deadline').value;
+      const m = {
+        title: $id('exam-title').value.trim(),
+        durRaw: $id('exam-duration').value.trim(),
+        duration: Number($id('exam-duration').value),
+        dlRaw,
+        deadline: dlRaw ? new Date(dlRaw).getTime() : 0
+      };
+
+      const err = validateExam(m);
+      if (err) {
+        toast(err.msg, 'error', 5000);
+        if (err.field) { const f = $id(err.field); f.focus(); f.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        if (err.q !== undefined) {
+          const card = $id('qcard-' + err.q);
+          card.classList.add('!border-rose-400', 'ring-2', 'ring-rose-300');
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+
+      if (m.deadline && m.deadline <= Date.now() &&
+          !confirm('That deadline is already in the past, so students will not be able to take this exam. Publish anyway?')) return;
+
+      // Exactly the schema the Android app reads
+      const payload = {
+        title: m.title,
+        durationMinutes: m.duration,
+        deadlineTimestamp: m.deadline || 0,
+        questions: examDraft.questions.map((q, i) => ({
+          id: 'q' + (i + 1),
+          questionNumber: i + 1,
+          questionText: q.questionText.trim(),
+          options: q.options.map(o => o.trim()),
+          correctIndex: q.correctIndex,
+          explanation: q.explanation.trim()
+        }))
+      };
+
+      const btn = $id('exam-save-btn');
+      btn.disabled = true;
+      try {
+        if (examDraft.id) await db.collection('live_exams').doc(examDraft.id).set(payload, { merge: true });
+        else await db.collection('live_exams').add(payload);
+        toast(examDraft.id ? 'Exam updated.' : 'Exam published — students can see it now.', 'success');
+        closeExamEditor(true);
+      } catch (e) {
+        console.error('Save exam error:', e);
+        toast('Failed to save exam: ' + e.message, 'error', 6000);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function deleteExam(id) {
+      const e = rawExams.find(x => x.id === id);
+      if (!e) return;
+      const n = subsNorm.filter(s => s.examId === id).length;
+      const msg = `Delete "${e.title || 'this exam'}"?` +
+        (n ? `\n\nIts ${n} student submission${n === 1 ? '' : 's'} will stay in live_exam_submissions, but the exam disappears from the app.` : '') +
+        '\n\nThis cannot be undone.';
+      if (!confirm(msg)) return;
+      try {
+        await db.collection('live_exams').doc(id).delete();
+        toast('Exam deleted.', 'info');
+      } catch (err) {
+        toast('Failed to delete exam: ' + err.message, 'error', 6000);
+      }
+    }
+
+    // ── submissions ──
+    // Field names are read defensively because the app's exact submission schema may vary.
+    function normSub(s) {
+      const examId = String(s.examId || s.liveExamId || s.exam_id || '');
+      const exam = rawExams.find(e => e.id === examId);
+      const email = String(s.userEmail || s.email || '');
+      const name = String(s.userName || s.studentName || s.displayName || s.name || 'Student');
+      const score = num(s.score ?? s.finalScore ?? s.correctAnswers ?? s.correctCount ?? s.points);
+      const total = num(s.totalQuestions ?? s.total ?? s.questionCount) ?? (exam && Array.isArray(exam.questions) ? exam.questions.length : null);
+      let pen = s.penalty ?? s.penalties ?? s.penaltyCount ?? s.penaltyPoints ?? s.violations ?? 0;
+      if (Array.isArray(pen)) pen = pen.length;
+      pen = num(pen) || 0;
+      let tt = num(s.timeTakenSeconds ?? s.timeSpentSeconds ?? s.durationSeconds);
+      if (tt === null && num(s.timeTakenMs) !== null) tt = num(s.timeTakenMs) / 1000;
+      if (tt === null && num(s.timeTakenMinutes) !== null) tt = num(s.timeTakenMinutes) * 60;
+      const pct = (score !== null && total > 0) ? (score / total) * 100 : null;
+      return {
+        id: s.id, examId,
+        examTitle: exam ? (exam.title || 'Untitled exam') : (s.examTitle || (examId ? '(deleted exam)' : '—')),
+        name, email,
+        uid: String(s.userId || s.uid || s.studentId || email || name),
+        score, total, pct,
+        rankVal: pct !== null ? pct : (score !== null ? score : -1),
+        penalty: pen, timeTaken: tt,
+        submittedMs: getTimestampMs(s.submittedAt ?? s.submissionTime ?? s.submittedAtMs ?? s.timestamp ?? s.createdAt)
+      };
+    }
+
+    function rebuildExamFilter() {
+      const sel = $id('exam-filter');
+      const prev = sel.value;
+      sel.innerHTML = '<option value="ALL">All exams</option>' +
+        sortedExams().map(e => `<option value="${escX(e.id)}">${escX(e.title || 'Untitled exam')}</option>`).join('');
+      sel.value = [...sel.options].some(o => o.value === prev) ? prev : 'ALL';
+    }
+
+    function filteredSubs() {
+      const ex = $id('exam-filter').value;
+      return subsNorm.filter(s => ex === 'ALL' || s.examId === ex);
+    }
+
+    function pctBadge(p) {
+      if (p === null) return '';
+      const cls = p >= 70 ? 'badge-approved' : p >= 50 ? 'badge-pending' : 'badge-rejected';
+      return `<span class="badge ${cls} ml-1.5">${Math.round(p)}%</span>`;
+    }
+
+    function renderExamSubs() {
+      const tbody = $id('subs-tbody');
+      if (!tbody) return;
+      if (subsError) {
+        $id('sub-stats').innerHTML = '';
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-rose-500 font-semibold">Error reading live_exam_submissions: ${escX(subsError)}</td></tr>`;
+        return;
+      }
+      const q = $id('sub-search').value.toLowerCase().trim();
+      const sort = $id('sub-sort').value;
+      const list = filteredSubs().filter(s => !q || s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q));
+      const cmp = {
+        newest: (a, b) => b.submittedMs - a.submittedMs,
+        high: rankCmp,
+        low: (a, b) => rankCmp(b, a),
+        pen: (a, b) => b.penalty - a.penalty
+      }[sort];
+      list.sort(cmp);
+
+      // summary tiles
+      const withPct = list.filter(s => s.pct !== null);
+      const avg = withPct.length ? Math.round(withPct.reduce((a, s) => a + s.pct, 0) / withPct.length) + '%' : '—';
+      const best = withPct.length ? Math.round(Math.max(...withPct.map(s => s.pct))) + '%' : '—';
+      const penCount = list.filter(s => s.penalty > 0).length;
+      const tile = (label, value, cls) => `<div class="card p-3 sm:p-4"><p class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">${label}</p><p class="text-xl sm:text-2xl font-display font-extrabold mt-1 ${cls}">${value}</p></div>`;
+      $id('sub-stats').innerHTML =
+        tile('Submissions', list.length, 'text-slate-900 dark:text-white') +
+        tile('Average score', avg, 'text-brand-600 dark:text-brand-400') +
+        tile('Highest score', best, 'text-emerald-600 dark:text-emerald-400') +
+        tile('With penalties', penCount, penCount ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white');
+
+      if (!list.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-14">
+          <div class="mx-auto w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-3"><i data-lucide="inbox" class="w-6 h-6"></i></div>
+          <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">No submissions found.</p>
+          <p class="text-xs text-slate-400 mt-1">Student results appear here as soon as they finish a live exam.</p></td></tr>`;
+        lucide.createIcons();
+        return;
+      }
+
+      tbody.innerHTML = list.map(s => `
+        <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
+          <td class="py-3 px-4">
+            <div class="flex items-center gap-3">
+              ${avatar(s.name)}
+              <div class="min-w-0">
+                <div class="font-bold text-slate-900 dark:text-white truncate">${escX(s.name)}</div>
+                ${s.email ? `<div class="text-xs text-slate-500 dark:text-slate-400 truncate">${escX(s.email)}</div>` : ''}
+              </div>
+            </div>
+          </td>
+          <td class="py-3 px-4 text-xs font-semibold text-slate-700 dark:text-slate-200 max-w-[14rem]"><div class="truncate">${escX(s.examTitle)}</div></td>
+          <td class="py-3 px-4 whitespace-nowrap">
+            <span class="font-display font-extrabold text-slate-900 dark:text-white">${fmtNum(s.score)}</span>${s.total !== null ? `<span class="text-[11px] font-bold text-slate-400"> / ${fmtNum(s.total)}</span>` : ''}${pctBadge(s.pct)}
+          </td>
+          <td class="py-3 px-4">${s.penalty > 0
+            ? `<span class="badge badge-rejected"><i data-lucide="alert-triangle" class="w-3 h-3"></i>${fmtNum(s.penalty)}</span>`
+            : `<span class="text-xs text-slate-400">None</span>`}</td>
+          <td class="py-3 px-4 font-mono text-xs font-semibold text-slate-600 dark:text-slate-300">${fmtClock(s.timeTaken)}</td>
+          <td class="py-3 px-4 text-xs text-slate-600 dark:text-slate-300 whitespace-nowrap">${s.submittedMs ? `${escX(fmtDateTime(s.submittedMs))}<div class="text-[11px] text-slate-400">${escX(timeAgo(s.submittedMs))}</div>` : '—'}</td>
+          <td class="py-3 px-4 text-right"><button class="btn-ghost !px-2" onclick="openSubRaw('${escX(s.id)}')" title="View raw data"><i data-lucide="braces" class="w-3.5 h-3.5"></i></button></td>
+        </tr>`).join('');
+      lucide.createIcons();
+    }
+
+    // ── Top 10 ──
+    function rankCmp(a, b) {
+      if (b.rankVal !== a.rankVal) return b.rankVal - a.rankVal;      // higher score first
+      if (a.penalty !== b.penalty) return a.penalty - b.penalty;      // fewer penalties
+      if (a.timeTaken !== null && b.timeTaken !== null && a.timeTaken !== b.timeTaken) return a.timeTaken - b.timeTaken; // faster
+      return (a.submittedMs || Number.MAX_SAFE_INTEGER) - (b.submittedMs || Number.MAX_SAFE_INTEGER); // earlier
+    }
+
+    // best attempt per student per exam, top 10
+    function topEntries() {
+      const best = new Map();
+      filteredSubs().forEach(s => {
+        const k = s.examId + '|' + s.uid;
+        const cur = best.get(k);
+        if (!cur || rankCmp(s, cur) < 0) best.set(k, s);
+      });
+      return [...best.values()].sort(rankCmp).slice(0, 10);
+    }
+
+    function renderTop10() {
+      const box = $id('top-list');
+      if (!box) return;
+      if (subsError) {
+        box.innerHTML = `<div class="text-center py-10 text-rose-500 text-sm font-semibold">Error reading live_exam_submissions: ${escX(subsError)}</div>`;
+        return;
+      }
+      const all = $id('exam-filter').value === 'ALL';
+      $id('top-sub').innerText = 'Best attempt per student · ranked by score, then fewer penalties, then faster time' + (all ? ' · all exams ranked by percentage' : '');
+      const top = topEntries();
+
+      if (!top.length) {
+        box.innerHTML = `<div class="text-center py-10">
+          <div class="mx-auto w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-3"><i data-lucide="trophy" class="w-6 h-6"></i></div>
+          <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">No scores yet.</p>
+          <p class="text-xs text-slate-400 mt-1">The leaderboard fills up as students submit.</p></div>`;
+        lucide.createIcons();
+        return;
+      }
+
+      const medal = ['🥇', '🥈', '🥉'];
+      const rankCls = [
+        'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
+        'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200',
+        'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300'
+      ];
+      const rowCls = [
+        'border-amber-300 dark:border-amber-500/40 bg-amber-50/60 dark:bg-amber-500/5',
+        'border-slate-300 dark:border-slate-600 bg-slate-50/60 dark:bg-slate-800/30',
+        'border-orange-300 dark:border-orange-500/40 bg-orange-50/50 dark:bg-orange-500/5'
+      ];
+
+      box.innerHTML = top.map((s, i) => `
+        <div class="flex items-center gap-3 rounded-2xl border p-3 sm:p-4 ${i < 3 ? rowCls[i] : 'border-slate-200 dark:border-slate-800'}">
+          <div class="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center font-display font-extrabold text-sm ${i < 3 ? rankCls[i] : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}">${i < 3 ? medal[i] : i + 1}</div>
+          ${avatar(s.name)}
+          <div class="min-w-0 flex-1">
+            <div class="font-bold text-slate-900 dark:text-white truncate">${escX(s.name)}</div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 truncate">${escX(all ? s.examTitle : (s.email || s.examTitle))}</div>
+          </div>
+          <div class="hidden sm:block text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 leading-relaxed">
+            <div>${s.penalty > 0 ? `<span class="text-rose-600 dark:text-rose-400">${fmtNum(s.penalty)} penalt${s.penalty === 1 ? 'y' : 'ies'}</span>` : 'No penalties'}</div>
+            <div class="font-mono">${fmtClock(s.timeTaken)}</div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="font-display font-extrabold text-slate-900 dark:text-white text-base sm:text-lg leading-none">${fmtNum(s.score)}${s.total !== null ? `<span class="text-[11px] font-bold text-slate-400"> / ${fmtNum(s.total)}</span>` : ''}</div>
+            ${s.pct !== null ? `<div class="text-[11px] font-bold text-brand-600 dark:text-brand-400 mt-1">${Math.round(s.pct)}%</div>` : ''}
+          </div>
+        </div>`).join('');
+      lucide.createIcons();
+    }
+
+    // ── exports + raw viewer ──
+    function exportSubmissionsCSV() {
+      const list = filteredSubs().sort((a, b) => b.submittedMs - a.submittedMs);
+      if (!list.length) return toast('No submissions to export.', 'error');
+      const rows = [['Exam', 'Student', 'Email', 'Score', 'Total', 'Percent', 'Penalties', 'Time taken', 'Submitted']];
+      list.forEach(s => rows.push([s.examTitle, s.name, s.email, fmtNum(s.score), fmtNum(s.total), s.pct === null ? '' : Math.round(s.pct) + '%', s.penalty, fmtClock(s.timeTaken), s.submittedMs ? new Date(s.submittedMs).toLocaleString() : '']));
+      downloadCSV(`ju-freshhub-exam-submissions-${stamp()}.csv`, rows);
+      toast(`Exported ${list.length} submissions.`, 'success');
+    }
+    function exportTopCSV() {
+      const top = topEntries();
+      if (!top.length) return toast('No scores to export.', 'error');
+      const rows = [['Rank', 'Student', 'Email', 'Exam', 'Score', 'Total', 'Percent', 'Penalties', 'Time taken']];
+      top.forEach((s, i) => rows.push([i + 1, s.name, s.email, s.examTitle, fmtNum(s.score), fmtNum(s.total), s.pct === null ? '' : Math.round(s.pct) + '%', s.penalty, fmtClock(s.timeTaken)]));
+      downloadCSV(`ju-freshhub-top10-${stamp()}.csv`, rows);
+      toast('Top 10 exported.', 'success');
+    }
+    function openSubRaw(id) {
+      const doc = rawSubs.find(s => s.id === id);
+      if (!doc) return;
+      $id('sub-raw-pre').textContent = JSON.stringify(doc, null, 2);
+      $id('sub-raw-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+    function closeSubRaw() { $id('sub-raw-modal').classList.add('hidden'); }
+
+
     function initUI() {
       applyBranding();
       syncThemeIcon();
@@ -1688,18 +2462,18 @@
       setInterval(() => { if (rawPayments.length) renderPayments(); if (rawUsers.length) renderStudents(); }, 60000);
       let last = 'payments';
       try { last = localStorage.getItem('ju_last_tab') || 'payments'; } catch (e) {}
-      if (!['payments', 'students', 'announcements', 'notifications'].includes(last)) last = 'payments';
+      if (!['payments', 'students', 'announcements', 'notifications', 'exams'].includes(last)) last = 'payments';
       switchTab(last);
       renderPaymentChips({}, 'PENDING_VERIFICATION');
       lucide.createIcons();
 
       // Keyboard shortcuts
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') { closeScreenshotModal(); closeShortcuts(); return; }
+        if (e.key === 'Escape') { closeScreenshotModal(); closeShortcuts(); closeSubRaw(); return; }
         const tag = (e.target.tagName || '').toLowerCase();
         if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.ctrlKey || e.metaKey || e.altKey) return;
         if (document.getElementById('app-container').classList.contains('hidden')) return;
-        const map = { '1': 'payments', '2': 'students', '3': 'announcements', '4': 'notifications' };
+        const map = { '1': 'payments', '2': 'students', '3': 'announcements', '4': 'notifications', '5': 'exams' };
         if (map[e.key]) { switchTab(map[e.key]); }
         else if (e.key === '/') {
           e.preventDefault();
@@ -1712,22 +2486,6 @@
         else if (e.key === '?') openShortcuts();
       });
     }
-    // Netlify Shadow DOM Drawerን ሙሉ በሙሉ ቆርጦ ያጠፋል
-    setInterval(() => {
-      // 1. መደበኛ ኤለመንቶችን ያጠፋል
-      document.querySelectorAll('netlify-drawer, #netlify-drawer, div[data-netlify-deploy-id]').forEach(el => el.remove());
-      
-      // 2. በ Shadow DOM ውስጥ የተደበቀውን ባጅ አድኖ ያጠፋል
-      const allElements = document.querySelectorAll('*');
-      allElements.forEach(el => {
-        if (el.shadowRoot) {
-          const badge = el.shadowRoot.querySelector('[class*="badge"], [class*="drawer"], [aria-label*="Netlify"]');
-          if (badge) {
-            el.remove();
-          }
-        }
-      });
-    }, 100);
   </script>
 </body>
 </html>
