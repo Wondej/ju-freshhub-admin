@@ -661,11 +661,43 @@
               </div>
             </div>
 
+            <div>
+              <div class="flex items-center justify-between gap-2 flex-wrap">
+                <label class="label !mb-0" for="exam-instructions">Instructions <span class="normal-case tracking-normal font-semibold text-slate-400">(shown to students before they start — pre-filled for every exam)</span></label>
+                <div class="flex gap-1.5">
+                  <button type="button" onclick="resetInstructions()" class="btn-ghost !py-1 !px-2.5 text-[11px]">Reset to default</button>
+                  <button type="button" onclick="saveInstructionsAsDefault()" class="btn-ghost !py-1 !px-2.5 text-[11px]">Use as my default</button>
+                </div>
+              </div>
+              <textarea id="exam-instructions" rows="6" oninput="examDirty = true" class="input resize-y mt-1.5"></textarea>
+            </div>
+
             <div class="flex items-center justify-between gap-3 pt-1">
               <h4 class="font-display font-bold text-slate-900 dark:text-white text-sm sm:text-base flex items-center gap-2">
                 Questions <span id="q-count" class="text-[11px] bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full font-extrabold">0</span>
               </h4>
-              <button type="button" onclick="addQuestion()" class="btn-ghost"><i data-lucide="plus" class="w-4 h-4"></i><span>Add question</span></button>
+              <div class="flex gap-2"><button type="button" onclick="fixAllSymbols()" class="btn-ghost" title="Convert \\vee, \\sim, \\Rightarrow … to ∨ ~ ⇒"><span class="font-bold">∨ ⇒</span><span class="hidden sm:inline">Fix symbols</span></button><button type="button" onclick="addQuestion()" class="btn-ghost"><i data-lucide="plus" class="w-4 h-4"></i><span>Add question</span></button></div>
+            </div>
+
+            <div class="rounded-2xl border border-brand-200 dark:border-brand-500/30 bg-brand-50/40 dark:bg-brand-500/5 p-3 sm:p-4 space-y-3">
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <h5 class="text-sm font-display font-bold text-slate-900 dark:text-white flex items-center gap-1.5"><i data-lucide="clipboard-paste" class="w-4 h-4"></i>Paste many questions at once</h5>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Copy the whole block (questions + choices) from any source and paste it here. Works with <b>1.</b> / <b>Q1)</b> numbering, choices on one line or wrapped over several lines, <b>- Answer: B</b> / <b>- Explanation: …</b> lines, LaTeX symbols (\vee, \sim, \Rightarrow … are converted to ∨ ~ ⇒),  <b>A.</b> to <b>E.</b> (4 or 5 choices) as <b>A.</b> / <b>A)</b> / <b>(A)</b>, <b>Answer: B</b> lines, an answer key at the end, or a * / ✓ next to the right choice.</p>
+                </div>
+                <button type="button" onclick="toggleBulk()" id="bulk-toggle" class="btn-ghost shrink-0 text-xs">Open</button>
+              </div>
+              <div id="bulk-body" class="hidden space-y-3">
+                <textarea id="bulk-text" rows="12" class="input resize-y font-mono text-xs" placeholder="1. What is the derivative of x^2?&#10;A. x&#10;B. 2x&#10;C. x^2&#10;D. 2&#10;Answer: B&#10;Explanation: d/dx x^n = n x^(n-1)&#10;&#10;2. Capital of Ethiopia?&#10;A) Adama&#10;B) Addis Ababa&#10;C) Hawassa&#10;D) Bahir Dar&#10;&#10;Answers: 2-B"></textarea>
+                <div class="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
+                  <span id="bulk-msg" class="text-xs font-semibold text-slate-500 dark:text-slate-400"></span>
+                  <div class="flex gap-2 sm:justify-end">
+                    <button type="button" onclick="document.getElementById('bulk-text').value='';document.getElementById('bulk-msg').innerText='';" class="btn-ghost">Clear</button>
+                    <button type="button" onclick="importBulk(false)" class="btn-primary"><i data-lucide="list-plus" class="w-4 h-4"></i><span>Add to exam</span></button>
+                    <button type="button" onclick="importBulk(true)" class="btn-ghost" title="Remove the current questions first">Replace all</button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div id="q-list" class="space-y-4"></div>
@@ -1735,7 +1767,7 @@
     function updateGreeting() {
       const h = new Date().getHours();
       const g = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
-      document.getElementById('greeting').innerText = `${g}, Admin 👋`;
+      document.getElementById('greeting').innerText = `${g}, Wondej!👋`;
       document.getElementById('live-clock').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) +
         ' · ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
@@ -1750,9 +1782,9 @@
     // Paste permanent image links here (or upload from Alerts & Bot tab).
     // ─────────────────────────────────────────────────────────────
     const JU_BRANDING = {
-      logo: 'Generated Image October 30, 2026 - 10_10PM.png',        // image file kept in the SAME folder as this HTML file; or e.g. 'https://yourdomain.com/ju-logo.png'
-      loginPhoto: '',  // e.g. 'https://yourdomain.com/campus-login.jpg'
-      dashPhoto: ''    // e.g. 'https://yourdomain.com/campus-banner.jpg'
+      logo: 'file_0000000038ec821190116c867f864f21.png',        // image file kept in the SAME folder as this HTML file; or e.g. 'https://yourdomain.com/ju-logo.png'
+      loginPhoto: 'Floating Books and Bright Ideas.png',  // e.g. 'https://yourdomain.com/campus-login.jpg'
+      dashPhoto: 'Learning Journey to the Stars.png'    // e.g. 'https://yourdomain.com/campus-banner.jpg'
     };
 
     function safeSrc(u) { return (u.startsWith('data:') || u.includes('%')) ? u : encodeURI(u); }
@@ -1844,7 +1876,7 @@
     let examsError = null;
     let subsError = null;
 
-    const LETTERS = ['A', 'B', 'C', 'D'];
+    const LETTERS = ['A', 'B', 'C', 'D', 'E'];
     const $id = (id) => document.getElementById(id);
     const escX = (v) => String(v == null ? '' : v)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -2012,9 +2044,227 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
+    // ── default instructions ──
+    const DEFAULT_EXAM_INSTRUCTIONS = [
+      'Read every question carefully before you answer.',
+      'Each question has one correct answer — choose the best option.',
+      'The timer starts as soon as you press Start and cannot be paused. The exam is submitted automatically when time runs out.',
+      'You can change your answers any time before you submit.',
+      'Answer every question; unanswered questions earn no marks.',
+      'Review the explanations after submitting to learn from your mistakes. Good luck!'
+    ].map((t, i) => (i + 1) + '. ' + t).join('\n');
+
+    function getDefaultInstructions() {
+      try { const v = localStorage.getItem('exam_default_instructions'); if (v && v.trim()) return v; } catch (e) {}
+      return DEFAULT_EXAM_INSTRUCTIONS;
+    }
+    function resetInstructions() {
+      $id('exam-instructions').value = getDefaultInstructions();
+      examDirty = true;
+      toast('Default instructions restored.', 'info');
+    }
+    function saveInstructionsAsDefault() {
+      const v = $id('exam-instructions').value.trim();
+      if (!v) return toast('Instructions are empty.', 'error');
+      try { localStorage.setItem('exam_default_instructions', v); toast('Saved as your default for new exams (on this browser).', 'success'); }
+      catch (e) { toast('Could not save the default on this browser.', 'error'); }
+    }
+
+    // ── bulk paste parser ──
+    function toggleBulk() {
+      const b = $id('bulk-body'), open = b.classList.contains('hidden');
+      b.classList.toggle('hidden', !open);
+      $id('bulk-toggle').innerText = open ? 'Close' : 'Open';
+      if (open) $id('bulk-text').focus();
+    }
+
+    // ── LaTeX-style symbols → real math characters ──
+    const MATH_MAP = {
+      sim: '¬', neg: '¬', lnot: '¬', vee: '∨', lor: '∨', wedge: '∧', land: '∧',
+      Rightarrow: '⇒', implies: '⇒', rightarrow: '→', to: '→', Leftarrow: '⇐', leftarrow: '←',
+      Leftrightarrow: '⇔', iff: '⇔', leftrightarrow: '↔', equiv: '≡', therefore: '∴', because: '∵',
+      forall: '∀', exists: '∃', in: '∈', notin: '∉', subset: '⊂', subseteq: '⊆', supset: '⊃', supseteq: '⊇',
+      cup: '∪', cap: '∩', emptyset: '∅', varnothing: '∅', setminus: '∖',
+      times: '×', div: '÷', cdot: '·', pm: '±', mp: '∓', leq: '≤', le: '≤', geq: '≥', ge: '≥',
+      neq: '≠', ne: '≠', approx: '≈', infty: '∞', sqrt: '√', degree: '°', ldots: '…', cdots: '⋯', dots: '…',
+      pi: 'π', theta: 'θ', alpha: 'α', beta: 'β', gamma: 'γ', delta: 'δ', epsilon: 'ε', lambda: 'λ', mu: 'μ',
+      sigma: 'σ', omega: 'ω', phi: 'φ', rho: 'ρ', tau: 'τ', Delta: 'Δ', Sigma: 'Σ', Omega: 'Ω', Pi: 'Π', Theta: 'Θ',
+      sum: '∑', prod: '∏', int: '∫', partial: '∂', nabla: '∇', angle: '∠', perp: '⊥', parallel: '∥',
+      top: '⊤', bot: '⊥', models: '⊨', vdash: '⊢', oplus: '⊕', otimes: '⊗', circ: '∘', propto: '∝', mid: '∣',
+      lt: '<', gt: '>', langle: '⟨', rangle: '⟩', lbrace: '{', rbrace: '}'
+    };
+    const SUP = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '+': '⁺', '-': '⁻', 'n': 'ⁿ' };
+    const SUB = { '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄', '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉' };
+    function mathFix(t) {
+      if (t === undefined || t === null) return t;
+      let s = String(t);
+      if (!/[\\^_]/.test(s)) return s;
+      const before = s;
+      s = s.replace(/\\(?:left|right|big|Big)(?![A-Za-z])/g, '')
+           .replace(/\\[,;!:]|\\q?quad(?![A-Za-z])/g, ' ')
+           .replace(/\\[()\[\]]/g, '')
+           .replace(/\\(?:text|mathrm|mathbf|textbf|mathit|operatorname)\s*\{([^{}]*)\}/g, '$1')
+           .replace(/\\mathbb\s*\{([RNZQC])\}/g, (m, c) => ({ R: 'ℝ', N: 'ℕ', Z: 'ℤ', Q: 'ℚ', C: 'ℂ' })[c])
+           .replace(/\\d?frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, (m, a, b) => {
+             const w = (x) => /^[A-Za-z0-9.]+$/.test(x.trim()) ? x.trim() : '(' + x.trim() + ')';
+             return w(a) + '/' + w(b);
+           })
+           .replace(/\\sqrt\s*\{([^{}]*)\}/g, '√($1)')
+           .replace(/\\([A-Za-z]+)/g, (m, c) => Object.prototype.hasOwnProperty.call(MATH_MAP, c) ? MATH_MAP[c] : m)
+           .replace(/\^\{?([0-9+\-]+|n)\}?/g, (m, g) => [...g].map(ch => SUP[ch] || ch).join(''))
+           .replace(/_\{?([0-9]+)\}?/g, (m, g) => [...g].map(ch => SUB[ch] || ch).join(''));
+      if (s !== before) {
+        s = s.replace(/\(\s+/g, '(').replace(/\s+\)/g, ')')
+             .replace(/([~¬])\s+(?=[A-Za-z(\u0370-\u03ff])/g, '$1')
+             .replace(/ {2,}/g, ' ').trim();
+      }
+      return s;
+    }
+    function fixAllSymbols() {
+      if (!examDraft) return;
+      let n = 0;
+      examDraft.questions.forEach(q => {
+        const f = (v) => { const r = mathFix(v); if (r !== v) n++; return r; };
+        q.questionText = f(q.questionText);
+        q.options = q.options.map(f);
+        q.explanation = f(q.explanation);
+      });
+      if (n) { examDirty = true; renderQuestions(); }
+      toast(n ? `Converted symbols in ${n} field${n === 1 ? '' : 's'}.` : 'No LaTeX-style symbols found.', n ? 'success' : 'info');
+    }
+
+    // split "stem A) … B) … C) … D) … [E) …]" (options may be on one line, wrapped, or on separate lines)
+    function splitStemOptions(body) {
+      const marks = [];
+      let from = 0;
+      for (let k = 0; k < 6; k++) {
+        const Lt = 'ABCDEF'[k];
+        const up = new RegExp('(^|\\s)\\(?' + Lt + '[.)](?=\\s|$)', 'g');
+        const lo = new RegExp('^\\(?' + Lt.toLowerCase() + '[.)](?=\\s|$)', 'gm');
+        up.lastIndex = from; lo.lastIndex = from;
+        const a = up.exec(body), b = lo.exec(body);
+        const cand = [];
+        if (a) cand.push({ start: a.index + a[1].length, end: a.index + a[0].length });
+        if (b) cand.push({ start: b.index, end: b.index + b[0].length });
+        if (!cand.length) break;
+        cand.sort((x, y) => x.start - y.start);
+        marks.push(cand[0]); from = cand[0].end;
+      }
+      if (marks.length < 2) return { stem: body, opts: [] };
+      const clean = (x) => x.replace(/\s*\n\s*/g, ' ').replace(/ {2,}/g, ' ').trim();
+      const opts = marks.map((mk, i) => clean(body.slice(mk.end, i + 1 < marks.length ? marks[i + 1].start : body.length)));
+      return { stem: clean(body.slice(0, marks[0].start)), opts: opts.slice(0, 5) };
+    }
+
+    function parseBulkQuestions(raw) {
+      let text = String(raw || '').replace(/\r\n?/g, '\n').replace(/[\u00a0\u200b\u200c\u200d\ufeff]/g, ' ');
+      const L = (c) => 'ABCDEF'.indexOf(String(c).toUpperCase());
+
+      // answer key at the end ("Answer Key: 1-B 2-C …")
+      const keyMap = {};
+      const lines0 = text.split('\n');
+      for (let i = 0; i < lines0.length; i++) {
+        if (/^\s*(?:answer\s*key|answers|answer\s*sheet|key)\b\s*[:\-–]?/i.test(lines0[i])) {
+          const tail = lines0.slice(i).join('\n');
+          const re = /(\d+)\s*[\.\-–:)=]*\s*\(?([A-Fa-f])\)?(?![A-Za-z])/g;
+          let m, found = 0;
+          while ((m = re.exec(tail))) { keyMap[Number(m[1])] = L(m[2]); found++; }
+          if (found >= 2) { text = lines0.slice(0, i).join('\n'); break; }
+          for (const k in keyMap) delete keyMap[k];
+        }
+      }
+
+      const QST = /^(?:Q(?:uestion)?\s*\.?\s*)?(\d+)\s*[\.\)\-:]\s*(.*)$/i;
+      const ANS = /^[-•*–]?\s*(?:correct\s+)?(?:answer|ans|correct|key)\s*(?:is)?\s*[:\-=]?\s*\(?([A-Fa-f])\)?(?![A-Za-z])\s*(.*)$/i;
+      const EXP = /^[-•*–]?\s*(?:explanation|solution|rationale|reason|exp)\s*[:\-]\s*(.*)$/i;
+      const MARK = /^(?:\*+\s*|[✓✔✅]\s*)|(?:\s*\*+|\s*[✓✔✅]|\s*\((?:correct|answer)\))\s*$/i;
+
+      const blocks = [];
+      let cur = null, prevBlank = true;
+      const newB = (num, first) => { cur = { num, body: first ? [first] : [], correct: -1, hasAns: false, inExp: false, exp: [] }; blocks.push(cur); };
+      const hasOptions = (b) => /(^|\s)\(?B[.)](?=\s|$)/.test(b.body.join('\n')) || /^\(?b[.)](?=\s|$)/m.test(b.body.join('\n'));
+
+      for (const rawLine of text.split('\n')) {
+        const line = rawLine.trim();
+        if (!line) { prevBlank = true; continue; }
+        const wasBlank = prevBlank; prevBlank = false;
+        let m;
+
+        if (cur && cur.body.length && (m = line.match(ANS))) {
+          const idx = L(m[1]); if (idx >= 0 && idx < 5) cur.correct = idx;
+          cur.hasAns = true; cur.inExp = false; continue;
+        }
+        if (cur && (m = line.match(EXP))) { cur.inExp = true; if (m[1]) cur.exp.push(m[1]); continue; }
+
+        if ((m = line.match(QST))) {
+          const num = Number(m[1]);
+          const isNew = !cur || ((hasOptions(cur) || cur.hasAns) && (!cur.inExp || num === cur.num + 1 || (wasBlank && !/^\s/.test(rawLine))));
+          if (isNew) { newB(num, m[2]); continue; }
+        }
+
+        if (!cur) { newB(null, line); continue; }
+        if (cur.inExp) { cur.exp.push(line); continue; }
+        if (cur.hasAns || (hasOptions(cur) && wasBlank)) { newB(null, line); continue; }
+        cur.body.push(line);
+      }
+
+      const out = blocks.map((b, i) => {
+        const { stem, opts } = splitStemOptions(b.body.join('\n'));
+        let correct = b.correct;
+        const options = [0, 1, 2, 3, 4].map(j => {
+          let o = opts[j] || '';
+          if (o && MARK.test(o)) { o = o.replace(MARK, '').replace(MARK, '').trim(); if (correct < 0) correct = j; }
+          return o;
+        });
+        if (correct < 0) {
+          const k = (b.num != null && keyMap[b.num] !== undefined) ? keyMap[b.num] : keyMap[i + 1];
+          if (k !== undefined && k >= 0 && k < 5) correct = k;
+        }
+        // hard-wrapped explanation lines are joined with spaces; list-like lines keep their own line
+        let exp = '';
+        b.exp.forEach(l => { exp += exp ? (/^(?:\d+[.)]|[-•*]|Step\b)/i.test(l) ? '\n' : ' ') + l : l; });
+        return {
+          questionText: mathFix(stem.trim()),
+          options: options.map(mathFix),
+          correctIndex: correct,
+          explanation: mathFix(exp.trim())
+        };
+      }).filter(q => q.questionText || q.options.some(o => o));
+      return { questions: out, extraOptions: 0 };
+    }
+
+    function importBulk(replaceAll) {
+      if (!examDraft) return;
+      const res = parseBulkQuestions($id('bulk-text').value);
+      const msg = $id('bulk-msg');
+      if (!res.questions.length) { msg.className = 'text-xs font-semibold text-rose-500'; msg.innerText = 'No questions found. Paste the questions with their A/B/C/D choices.'; return; }
+
+      const qsNow = examDraft.questions;
+      const onlyBlank = qsNow.length === 1 && !qsNow[0].questionText.trim() && !qsNow[0].options.some(o => o.trim()) && !qsNow[0].explanation.trim();
+      if (replaceAll || onlyBlank) examDraft.questions = [];
+      const firstNew = examDraft.questions.length;
+      examDraft.questions.push(...res.questions);
+      examDirty = true;
+      renderQuestions();
+
+      const noAns = res.questions.filter(q => q.correctIndex < 0).length;
+      const badOpts = res.questions.filter(q => q.options.slice(0, 4).some(o => !o) || (q.correctIndex === 4 && !q.options[4])).length;
+      const parts = [`Added ${res.questions.length} question${res.questions.length === 1 ? '' : 's'}.`];
+      if (noAns) parts.push(`${noAns} need a correct answer.`);
+      if (badOpts) parts.push(`${badOpts} have missing choices.`);
+      const needsWork = noAns || badOpts;
+      msg.className = 'text-xs font-semibold ' + (needsWork ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400');
+      msg.innerText = parts.join(' ') + (needsWork ? ' Highlighted below.' : ' Check them and press Save & Publish.');
+      if (!needsWork) $id('bulk-text').value = '';
+
+      const target = res.questions.findIndex(q => q.correctIndex < 0 || q.options.slice(0, 4).some(o => !o) || (q.correctIndex === 4 && !q.options[4]));
+      const el = $id('qcard-' + (firstNew + (target >= 0 ? target : 0)));
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
     // ── editor ──
     function blankQuestion() {
-      return { questionText: '', options: ['', '', '', ''], correctIndex: 0, explanation: '' };
+      return { questionText: '', options: ['', '', '', '', ''], correctIndex: 0, explanation: '' };
     }
 
     function openExamEditor(id, asCopy) {
@@ -2024,8 +2274,8 @@
       const qs = src && Array.isArray(src.questions) && src.questions.length
         ? [...src.questions].sort((a, b) => (a.questionNumber || 0) - (b.questionNumber || 0)).map(q => ({
             questionText: String(q.questionText || ''),
-            options: [0, 1, 2, 3].map(j => (q.options && q.options[j] != null) ? String(q.options[j]) : ''),
-            correctIndex: (Number.isInteger(q.correctIndex) && q.correctIndex >= 0 && q.correctIndex <= 3) ? q.correctIndex : 0,
+            options: [0, 1, 2, 3, 4].map(j => (q.options && q.options[j] != null) ? String(q.options[j]) : ''),
+            correctIndex: (Number.isInteger(q.correctIndex) && q.correctIndex >= 0 && q.correctIndex <= 4) ? q.correctIndex : 0,
             explanation: String(q.explanation || '')
           }))
         : [blankQuestion()];
@@ -2036,6 +2286,8 @@
       $id('exam-title').value = src ? (asCopy ? 'Copy of ' + (src.title || '') : (src.title || '')) : '';
       $id('exam-duration').value = src ? (Number(src.durationMinutes) || '') : 60;
       $id('exam-deadline').value = (src && !asCopy) ? toLocalInput(Number(src.deadlineTimestamp) || 0) : '';
+      $id('exam-instructions').value = (src && typeof src.instructions === 'string' && src.instructions.trim()) ? src.instructions : getDefaultInstructions();
+      $id('bulk-text').value = ''; $id('bulk-msg').innerText = '';
       $id('editor-heading').innerText = examDraft.id ? 'Edit Live Exam' : (asCopy ? 'Duplicate Live Exam' : 'Create Live Exam');
 
       const n = examDraft.id ? subsNorm.filter(s => s.examId === examDraft.id).length : 0;
@@ -2070,7 +2322,7 @@
       const qs = examDraft.questions;
       $id('q-count').innerText = qs.length;
       $id('q-list').innerHTML = qs.map((q, i) => `
-        <div id="qcard-${i}" class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-900/50 p-3 sm:p-4 space-y-3">
+        <div id="qcard-${i}" class="rounded-2xl border ${(q.correctIndex < 0 || (q.questionText.trim() && (q.options.slice(0, 4).some(o => !o.trim()) || (q.correctIndex === 4 && !q.options[4].trim())))) ? 'border-amber-400 ring-1 ring-amber-300' : 'border-slate-200 dark:border-slate-700'} bg-slate-50/60 dark:bg-slate-900/50 p-3 sm:p-4 space-y-3">
           <div class="flex items-center justify-between gap-2">
             <span class="inline-flex items-center justify-center min-w-[2rem] h-8 px-2 rounded-lg bg-gradient-to-br from-brand-600 to-brand-800 text-white text-xs font-extrabold">Q${i + 1}</span>
             <div class="flex gap-1">
@@ -2087,13 +2339,13 @@
           </div>
 
           <div>
-            <label class="label">Options — select the correct answer</label>
+            <label class="label">Options — select the correct answer <span class="normal-case tracking-normal font-semibold text-slate-400">(E is optional)</span></label>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              ${[0, 1, 2, 3].map(j => `
+              ${[0, 1, 2, 3, 4].map(j => `
                 <label id="opt-${i}-${j}" class="${optBox(q.correctIndex === j)}">
                   <input type="radio" name="correct-${i}" ${q.correctIndex === j ? 'checked' : ''} onchange="setCorrect(${i}, ${j})" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500 shrink-0" title="Mark ${LETTERS[j]} as correct" />
                   <span class="w-4 text-xs font-extrabold text-slate-500 dark:text-slate-400 shrink-0">${LETTERS[j]}</span>
-                  <input type="text" value="${escX(q.options[j])}" oninput="updOpt(${i}, ${j}, this.value)" placeholder="Option ${LETTERS[j]}" class="flex-1 min-w-0 bg-transparent outline-none text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400" />
+                  <input type="text" value="${escX(q.options[j])}" oninput="updOpt(${i}, ${j}, this.value)" placeholder="Option ${LETTERS[j]}${j === 4 ? ' (optional)' : ''}" class="flex-1 min-w-0 bg-transparent outline-none text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400" />
                 </label>`).join('')}
             </div>
           </div>
@@ -2115,7 +2367,7 @@
     function setCorrect(i, j) {
       examDraft.questions[i].correctIndex = j;
       examDirty = true;
-      [0, 1, 2, 3].forEach(k => { const el = $id(`opt-${i}-${k}`); if (el) el.className = optBox(k === j); });
+      [0, 1, 2, 3, 4].forEach(k => { const el = $id(`opt-${i}-${k}`); if (el) el.className = optBox(k === j); });
     }
     function addQuestion() {
       examDraft.questions.push(blankQuestion());
@@ -2164,7 +2416,8 @@
         for (let j = 0; j < 4; j++) {
           if (!q.options[j].trim()) return { msg: `Question ${i + 1}: option ${LETTERS[j]} is empty.`, q: i };
         }
-        if (!Number.isInteger(q.correctIndex) || q.correctIndex < 0 || q.correctIndex > 3)
+        if (q.correctIndex === 4 && !q.options[4].trim()) return { msg: `Question ${i + 1}: option E is marked correct but is empty.`, q: i };
+        if (!Number.isInteger(q.correctIndex) || q.correctIndex < 0 || q.correctIndex > 4)
           return { msg: `Question ${i + 1}: choose the correct option.`, q: i };
       }
       return null;
@@ -2201,13 +2454,14 @@
         title: m.title,
         durationMinutes: m.duration,
         deadlineTimestamp: m.deadline || 0,
+        instructions: ($id('exam-instructions').value.trim() || getDefaultInstructions()),
         questions: examDraft.questions.map((q, i) => ({
           id: 'q' + (i + 1),
           questionNumber: i + 1,
-          questionText: q.questionText.trim(),
-          options: q.options.map(o => o.trim()),
+          questionText: mathFix(q.questionText.trim()),
+          options: q.options.map(o => mathFix(o.trim())).slice(0, q.options[4].trim() ? 5 : 4),
           correctIndex: q.correctIndex,
-          explanation: q.explanation.trim()
+          explanation: mathFix(q.explanation.trim())
         }))
       };
 
