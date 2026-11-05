@@ -1767,7 +1767,7 @@
     function updateGreeting() {
       const h = new Date().getHours();
       const g = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
-      document.getElementById('greeting').innerText = `${g}, Wondej!👋`;
+      document.getElementById('greeting').innerText = `${g}, Wonde!👋`;
       document.getElementById('live-clock').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) +
         ' · ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
